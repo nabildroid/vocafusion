@@ -1,0 +1,102 @@
+name: vocafusion
+description: "application for learning new vocabulary through a stroies"
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 0.0.12+4
+
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_local_notifications:
+  wakelock_plus: ^1.2.5 # screen always on for 5 min when Scanning screen, reseted on each scan
+  shared_preferences: ^2.2.3
+  rxdart: ^0.27.7 # notification handler
+  path: ^1.8.2
+  path_provider: ^2.1.3
+  path_provider_android: ^2.2.5
+  path_provider_foundation: ^2.4.0
+  logger: ^2.4.0 # better logger system
+  get_it: ^7.7.0 # dependecies (E.g Repositories) sharing
+  go_router: ^14.1.4
+  flutter_bloc: ^8.1.5
+  cached_network_image: ^3.3.0 #Food Pictures are online provided
+  bloc: ^8.1.1
+  hydrated_bloc:
+  connectivity_plus: ^6.0.3 # online an offline checker
+  dio: ^5.7.0 # http
+  equatable:
+  adaptive_theme:
+  intl: any
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+  timezone:
+  sembast:
+  encrypt:
+  crypto:
+  flutter_localizations:
+    sdk: flutter
+  google_fonts:
+  flutter_launcher_icons:
+  fsrs:
+  flutter_markdown:
+  scrollable_positioned_list:
+  intrinsic_dimension:
+  jwt_decoder:
+  firebase_core:
+  firebase_app_check:
+  pinput:
+  flutter_inappwebview:
+  sliver_tools:
+  action_slider:
+  flutter_keyboard_visibility:
+  cloud_firestore:
+  sentry_flutter:
+  auto_animated:
+  audioplayers:
+  flutter_native_splash:
+  url_launcher:
+  entry:
+  posthog_flutter:
+  flutter_markdown_latex:
+  flutter_math_fork:
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons:
+
+  build_runner:
+
+flutter:
+  generate: true
+
+  uses-material-design: true
+
+  # # To add assets to your application, add an assets section, like this:
+  # assets:
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  image_path: "assets/logo.png"
+  min_sdk_android: 24
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/logo.png"
