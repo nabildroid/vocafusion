@@ -21,62 +21,12 @@ class PreferenceRepository {
     }
   }
 
-  Future<AccessTokenModel?> getAccessToken() async {
-    final data = await getString("accessToken");
-    if (data == null) return null;
-
-    return AccessTokenModel.fromJson(data);
+  Future<String> getUser() async {
+    return (await getString("user")) ?? "";
   }
 
-  Future<void> setAccessToken(AccessTokenModel accessToken) async {
-    await setString(
-      "accessToken",
-      accessToken.toJson(),
-    );
-  }
-
-  Future<bool?> isRoadmapGoalsNeedUpload({bool? val}) async {
-    if (val == null) {
-      return (await getBool("isRoadmapGoalsNeedUpload")) ?? false;
-    } else {
-      setBool('isRoadmapGoalsNeedUpload', val);
-      return null;
-    }
-  }
-
-  Future<DateTime> lastFetchedGoals() async {
-    final data = await getInt("lastFetchedGoals");
-    unawaited(
-        setInt("lastFetchedGoals", DateTime.now().millisecondsSinceEpoch));
-
-    if (data == null) {
-      return DateTime.parse("2024-02-01");
-    } else {
-      return DateTime.fromMillisecondsSinceEpoch(data);
-    }
-  }
-
-  Future<DateTime> lastFetchedRecords() async {
-    final data = await getInt("lastFetchedrecords");
-    unawaited(
-        setInt("lastFetchedrecords", DateTime.now().millisecondsSinceEpoch));
-
-    if (data == null) {
-      return DateTime.parse("2024-02-01");
-    } else {
-      return DateTime.fromMillisecondsSinceEpoch(data);
-    }
-  }
-
-  Future<DateTime?> lastFetchedSR() async {
-    final data = await getInt("lastFetchedSR");
-    unawaited(setInt("lastFetchedSR", DateTime.now().millisecondsSinceEpoch));
-
-    if (data == null) {
-      return null;
-    } else {
-      return DateTime.fromMillisecondsSinceEpoch(data);
-    }
+  Future<void> setUser(String user) async {
+    setString("user", user);
   }
 
   @override
@@ -84,7 +34,7 @@ class PreferenceRepository {
 }
 
 extension on PreferenceRepository {
-  static const globalPrefix = "18";
+  static const globalPrefix = "1";
 
   Future<bool?> getBool(String key) async {
     final prefs = await _prefs;

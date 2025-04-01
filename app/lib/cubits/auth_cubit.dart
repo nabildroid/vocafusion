@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:vocafusion/config/locator.dart';
-import 'package:vocafusion/modeling.dart';
-import 'package:vocafusion/repositories/user_repository.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:vocafusion/config/locator.dart';
+import 'package:vocafusion/models/modeling.dart';
+import 'package:vocafusion/repositories/user_repository.dart';
 
 enum AuthStatus { inside, out, checking }
 
@@ -45,16 +45,16 @@ class AuthCubit extends Cubit<AuthState> {
     } else {
       emit(state.copyWith(
         status: AuthStatus.inside,
-        user: _repo.currentUser.value,
+        user: currentUser,
       ));
     }
 
-    _repo.currentUser.listen((user) {
-      emit(state.copyWith(
-        user: user,
-        status: user == null ? AuthStatus.out : null,
-      ));
-    });
+    // _repo.currentUser.listen((user) {
+    //   emit(state.copyWith(
+    //     user: user,
+    //     status: user == null ? AuthStatus.out : null,
+    //   ));
+    // });
 
     unawaited(_repo.getUser(live: true));
   }
@@ -65,18 +65,18 @@ class AuthCubit extends Cubit<AuthState> {
 
     final user = change.nextState.user;
     if (user != null) {
-      Sentry.configureScope((scope) async {
-        await scope.setUser(
-          SentryUser(
-              id: user.uid,
-              segment: user.claims.grade,
-              data: {"phone": user.phone}),
-        );
+      // Sentry.configureScope((scope) async {
+      //   await scope.setUser(
+      //     SentryUser(
+      //         id: user.uid,
+      //         segment: user.claims.grade,
+      //         data: {"phone": user.phone}),
+      //   );
 
-        if (user.claims.isPremium) {
-          await scope.setTag("premium", "true");
-        }
-      });
+      //   if (user.claims.isPremium) {
+      //     await scope.setTag("premium", "true");
+      //   }
+      // });
     }
   }
 }

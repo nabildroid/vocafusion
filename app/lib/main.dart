@@ -11,14 +11,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:logger/logger.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:vocafusion/config/custom_router.dart';
 import 'package:vocafusion/config/locator.dart';
 import 'package:vocafusion/cubits/auth_cubit.dart';
+import 'package:vocafusion/cubits/content_cubit.dart';
+import 'package:vocafusion/cubits/learning/biased_sorting_cubit.dart';
+import 'package:vocafusion/cubits/learning/sr_cubit.dart';
+import 'package:vocafusion/repositories/content_repository.dart';
 import 'package:vocafusion/services/firebase_service.dart';
 import 'package:vocafusion/startup.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:posthog_flutter/posthog_flutter.dart';
+// import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -86,7 +91,7 @@ void main() async {
 
   ////
 
-  await FirebaseService.init();
+  // await FirebaseService.init();
 
   runApp(const MyApp());
 }
@@ -99,7 +104,19 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => AuthCubit()..init(),
+          create: (context) => AuthCubit()..init(),
+          lazy: false,
+        ),
+        BlocProvider(
+          create: (context) => ContentCubit()..sync(context),
+          lazy: false,
+        ),
+        BlocProvider(
+          create: (context) => SrCubit()..sync(context),
+          lazy: false,
+        ),
+        BlocProvider(
+          create: (context) => BiasedSortingCubit()..sync(context),
           lazy: false,
         ),
       ],

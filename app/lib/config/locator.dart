@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
+import 'package:vocafusion/repositories/content_repository.dart';
 import 'package:vocafusion/repositories/preferences_repository.dart';
+import 'package:vocafusion/repositories/progress_repository.dart';
 import 'package:vocafusion/repositories/user_repository.dart';
 import 'package:sembast/sembast.dart';
 
@@ -12,7 +14,9 @@ Future<void> setUpLocator({required Database sembastInstance}) async {
   locator.registerSingleton(sembastInstance);
 
   locator.registerSingleton(PreferenceRepository());
+  locator.registerSingleton(ProgressRepository());
   locator.registerSingleton(UserRepository());
+  locator.registerSingleton(ContentRepository());
 
   locator.registerSingleton(RouteObserver<ModalRoute<dynamic>>());
 }

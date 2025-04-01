@@ -1,4 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:vocafusion/config/locator.dart';
+import 'package:vocafusion/models/modeling.dart';
+import 'package:vocafusion/repositories/preferences_repository.dart';
 
 class RegisterScreen extends StatelessWidget {
   @override
@@ -50,7 +56,22 @@ class RegisterScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24.0),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final user = User(
+                      uid: "erferfe",
+                      nativeLanguage: "english",
+                      targetLanguage: "frensh",
+                      level: 2,
+                      createdAt: DateTime.now(),
+                      isPremium: false,
+                    );
+
+                    await locator.get<PreferenceRepository>().setUser(
+                          jsonEncode(user.toJson()),
+                        );
+
+                    context.go("/learn");
+
                     // Register button doesn't do anything
                   },
                   style: ElevatedButton.styleFrom(
