@@ -6,6 +6,7 @@ import 'package:vocafusion/repositories/preferences_repository.dart';
 import 'package:vocafusion/repositories/progress_repository.dart';
 import 'package:vocafusion/repositories/user_repository.dart';
 import 'package:sembast/sembast.dart';
+import 'package:vocafusion/repositories/favorites_repository.dart';
 
 final GetIt locator = GetIt.instance;
 
@@ -17,6 +18,7 @@ Future<void> setUpLocator({required Database sembastInstance}) async {
   locator.registerSingleton(ProgressRepository());
   locator.registerSingleton(UserRepository());
   locator.registerSingleton(ContentRepository());
+  locator.registerLazySingleton(() => FavoritesRepository());
 
   locator.registerSingleton(RouteObserver<ModalRoute<dynamic>>());
 }

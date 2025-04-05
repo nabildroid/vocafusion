@@ -70,6 +70,10 @@ class ContentCubit extends Cubit<ContentState> {
       emit(state.copyWith(words: cardsMap.values.toList()));
     }
   }
+
+  Quiz? getQuiz(String id) {
+    return state.quizzes.firstWhere((q) => q.id == id);
+  }
 }
 
 extension FlashcardsPreselectionCubitExtention on ContentCubit {

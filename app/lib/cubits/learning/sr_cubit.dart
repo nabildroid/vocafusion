@@ -62,21 +62,21 @@ class SrCubit extends Cubit<SRState> {
   }
 
   recordQuizAnswer(
-    Quiz quiz,
+    WordCard word,
     bool answer, {
     bool? secondTry,
   }) {
     if (answer == false) {
-      sr.recordRecall(quiz.cardId, isIncorrect: true);
+      sr.recordRecall(word.id, isIncorrect: true);
     } else {
       if (secondTry == true) {
         sr.recordRecall(
-          quiz.cardId,
+          word.id,
           isHard: true,
         );
       } else {
         sr.recordRecall(
-          quiz.cardId,
+          word.id,
           isGood: true,
         );
       }

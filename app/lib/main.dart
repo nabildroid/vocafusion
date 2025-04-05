@@ -75,7 +75,7 @@ void main() async {
   await dir.create(recursive: true);
 
   final db = await databaseFactoryIo.openDatabase(
-    join(dir.path, 'me.laknabil.vocafusion_v0.0.db'),
+    join(dir.path, 'me.laknabil.vocafusion_v0.02.db'),
   );
   await setUpLocator(sembastInstance: db);
 

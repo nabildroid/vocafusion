@@ -15,6 +15,10 @@ class ContentRepository extends AuthorizedDio {
 
   final isOnline = BehaviorSubject<bool>.seeded(false);
 
+  final flowsStream = BehaviorSubject<List<WordsFlow>>();
+  final wordsStream = BehaviorSubject<List<WordCard>>();
+  final quizzesStream = BehaviorSubject<List<Quiz>>();
+
   ContentRepository() : super(rawHttp: AuthorizedDio.defaultHttp) {
     Connectivity().onConnectivityChanged.listen(
           (status) => isOnline.add(!status.contains(ConnectivityResult.none)),
@@ -58,33 +62,33 @@ extension QuizzesContentRepository on ContentRepository {
   }
 
   Future<List<Quiz>> onlineData(String flow) async {
-    final response = await (await http).get("material/quizzes/$flow");
+    // final response = await (await http).get("material/quizzes/$flow");
 
-    final data = (response.data as List).map((e) => Quiz.fromJson(e)).toList();
+    // final data = (response.data as List).map((e) => Quiz.fromJson(e)).toList();
+    final data = DummyQuizzes;
     unawaited(sync(onlineData: data));
 
     return data;
   }
 
   BehaviorSubject<List<Quiz>> quizzes(String flow) {
-    final stream = BehaviorSubject<List<Quiz>>.seeded([]);
     final offline = offlineData(flow);
     bool isOnlineDelivered = false;
     offline.then((val) {
-      if (!isOnlineDelivered) stream.add(val);
+      if (!isOnlineDelivered) quizzesStream.add(val);
     });
 
     if (isOnline.value) {
-      onlineData(flow).then(stream.add).then((_) {
+      onlineData(flow).then(quizzesStream.add).then((_) {
         isOnlineDelivered = true;
       });
     } else {
       isOnline.firstWhere((e) => e).then((_) {
-        onlineData(flow).then(stream.add);
+        onlineData(flow).then(quizzesStream.add);
       });
     }
 
-    return stream;
+    return quizzesStream;
   }
 }
 
@@ -132,31 +136,29 @@ extension WordsContentRepository on ContentRepository {
   }
 
   BehaviorSubject<List<WordCard>> words(String flow) {
-    final stream = BehaviorSubject<List<WordCard>>();
     final offline = offlineData(flow);
     bool isOnlineDelivered = false;
     offline.then((val) {
-      if (!isOnlineDelivered) stream.add(val);
+      if (!isOnlineDelivered) wordsStream.add(val);
     });
 
     if (isOnline.value) {
-      onlineData(flow).then(stream.add).then((_) {
+      onlineData(flow).then(wordsStream.add).then((_) {
         isOnlineDelivered = true;
       });
     } else {
       isOnline.firstWhere((e) => e).then((_) {
-        onlineData(flow).then(stream.add);
+        onlineData(flow).then(wordsStream.add);
       });
     }
 
-    return stream;
+    return wordsStream;
   }
 }
 
 extension FlowContentRepository on ContentRepository {
   Future<void> sync({required List<WordsFlow> onlineData}) async {
     if (onlineData.isEmpty) return;
-    await _flowStore.drop(_db);
     await _db.transaction((txn) async {
       for (final flow in onlineData) {
         await _flowStore.record(flow.id).put(txn, flow.toJson());
@@ -181,26 +183,25 @@ extension FlowContentRepository on ContentRepository {
   }
 
   BehaviorSubject<List<WordsFlow>> flows(FlowFilter filter) {
-    final stream = BehaviorSubject<List<WordsFlow>>.seeded([]);
     final offline = offlineData();
     bool isOnlineDelivered = false;
     offline.then((val) {
-      if (!isOnlineDelivered) stream.add(val);
+      if (!isOnlineDelivered) flowsStream.add(val);
     });
 
     try {
       if (isOnline.value) {
-        onlineData(filter).then(stream.add).then((_) {
+        onlineData(filter).then(flowsStream.add).then((_) {
           isOnlineDelivered = true;
         });
       } else {
         isOnline.firstWhere((e) => e).then((_) {
-          onlineData(filter).then(stream.add);
+          onlineData(filter).then(flowsStream.add);
         });
       }
     } catch (e) {}
 
-    return stream;
+    return flowsStream;
   }
 }
 
