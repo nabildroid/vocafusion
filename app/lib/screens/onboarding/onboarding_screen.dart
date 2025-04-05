@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:vocafusion/cubits/onboarding_cubit.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -11,14 +13,6 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-
-  // Onboarding data stored only in state
-  String? nativeLanguage;
-  String? targetLanguage;
-  String? languageLevel;
-  String? age;
-  String? gender;
-  String? selectedTopic;
 
   final List<String> _languages = [
     'English',
@@ -98,122 +92,127 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Progress indicator
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: LinearProgressIndicator(
-                value: (_currentPage + 1) / 6,
-                backgroundColor: Colors.grey[300],
-                color: Colors.blueGrey[800],
-                minHeight: 8,
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
+    return BlocBuilder<OnboardingCubit, OnboardingState>(
+      builder: (context, state) {
+        return Scaffold(
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Progress indicator
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0, vertical: 16.0),
+                  child: LinearProgressIndicator(
+                    value: (_currentPage + 1) / 6,
+                    backgroundColor: Colors.grey[300],
+                    color: Colors.blueGrey[800],
+                    minHeight: 8,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
 
-            // PageView
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const ClampingScrollPhysics(),
-                onPageChanged: (int page) {
-                  setState(() {
-                    _currentPage = page;
-                  });
-                },
-                children: [
-                  // Welcome Page
-                  _buildWelcomePage(),
-
-                  // Native Language Page
-                  _buildLanguagePage(
-                    title: 'Choose Your Native Language',
-                    onLanguageSelected: (language) {
+                // PageView
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const ClampingScrollPhysics(),
+                    onPageChanged: (int page) {
                       setState(() {
-                        nativeLanguage = language;
+                        _currentPage = page;
                       });
                     },
-                    selectedLanguage: nativeLanguage,
+                    children: [
+                      // Welcome Page
+                      _buildWelcomePage(),
+
+                      // Native Language Page
+                      _buildLanguagePage(
+                        title: 'Choose Your Native Language',
+                        onLanguageSelected: (language) {
+                          context
+                              .read<OnboardingCubit>()
+                              .setNativeLanguage(language);
+                        },
+                        selectedLanguage: state.nativeLanguage,
+                      ),
+
+                      // Target Language Page
+                      _buildLanguagePage(
+                        title: 'Choose Your Target Language',
+                        onLanguageSelected: (language) {
+                          context
+                              .read<OnboardingCubit>()
+                              .setTargetLanguage(language);
+                        },
+                        selectedLanguage: state.targetLanguage,
+                      ),
+
+                      // Language Level Page
+                      _buildLevelPage(state),
+
+                      // Profile Page (Age & Gender)
+                      _buildProfilePage(state),
+
+                      // Topics Page
+                      _buildTopicsPage(state),
+                    ],
                   ),
+                ),
 
-                  // Target Language Page
-                  _buildLanguagePage(
-                    title: 'Choose Your Target Language',
-                    onLanguageSelected: (language) {
-                      setState(() {
-                        targetLanguage = language;
-                      });
-                    },
-                    selectedLanguage: targetLanguage,
+                // Navigation buttons
+                Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Back button
+                      _currentPage > 0
+                          ? TextButton(
+                              onPressed: _previousPage,
+                              child: const Text('Back'),
+                            )
+                          : const SizedBox(width: 80),
+
+                      // Next/Get Started button
+                      ElevatedButton(
+                        onPressed:
+                            _isNextButtonEnabled(state) ? _nextPage : null,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 16),
+                          backgroundColor: Colors.blueGrey[800],
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text(
+                          _currentPage == 5 ? 'Get Started' : 'Next',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
                   ),
-
-                  // Language Level Page
-                  _buildLevelPage(),
-
-                  // Profile Page (Age & Gender)
-                  _buildProfilePage(),
-
-                  // Topics Page
-                  _buildTopicsPage(),
-                ],
-              ),
+                ),
+              ],
             ),
-
-            // Navigation buttons
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Back button
-                  _currentPage > 0
-                      ? TextButton(
-                          onPressed: _previousPage,
-                          child: const Text('Back'),
-                        )
-                      : const SizedBox(width: 80),
-
-                  // Next/Get Started button
-                  ElevatedButton(
-                    onPressed: _isNextButtonEnabled() ? _nextPage : null,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 16),
-                      backgroundColor: Colors.blueGrey[800],
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(
-                      _currentPage == 5 ? 'Get Started' : 'Next',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  bool _isNextButtonEnabled() {
+  bool _isNextButtonEnabled(OnboardingState state) {
     switch (_currentPage) {
       case 0:
         return true; // Welcome page, always enabled
       case 1:
-        return nativeLanguage != null; // Native language page
+        return state.nativeLanguage != null; // Native language page
       case 2:
-        return targetLanguage != null; // Target language page
+        return state.targetLanguage != null; // Target language page
       case 3:
-        return languageLevel != null; // Level page
+        return state.languageLevel != null; // Level page
       case 4:
-        return age != null && gender != null; // Profile page
+        return state.age != null && state.gender != null; // Profile page
       case 5:
-        return selectedTopic != null; // Topics page
+        return state.selectedTopic != null; // Topics page
       default:
         return false;
     }
@@ -307,7 +306,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   // Language Level Page
-  Widget _buildLevelPage() {
+  Widget _buildLevelPage(OnboardingState state) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -323,7 +322,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Select your current level in ${targetLanguage ?? "your target language"}',
+            'Select your current level in ${state.targetLanguage ?? "your target language"}',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 32),
@@ -338,13 +337,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               itemCount: _levels.length,
               itemBuilder: (context, index) {
                 final level = _levels[index];
-                final isSelected = languageLevel == level;
+                final isSelected = state.languageLevel == level;
 
                 return GestureDetector(
                   onTap: () {
-                    setState(() {
-                      languageLevel = level;
-                    });
+                    context.read<OnboardingCubit>().setLanguageLevel(level);
                   },
                   child: Container(
                     decoration: BoxDecoration(
@@ -414,7 +411,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   // Profile Page (Age & Gender)
-  Widget _buildProfilePage() {
+  Widget _buildProfilePage(OnboardingState state) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -447,15 +444,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             spacing: 12,
             runSpacing: 12,
             children: _ages.map((ageGroup) {
-              final isSelected = age == ageGroup;
+              final isSelected = state.age == ageGroup;
               return ChoiceChip(
                 label: Text(ageGroup),
                 selected: isSelected,
                 onSelected: (selected) {
                   if (selected) {
-                    setState(() {
-                      age = ageGroup;
-                    });
+                    context.read<OnboardingCubit>().setAge(ageGroup);
                   }
                 },
                 selectedColor: Colors.blueGrey[200],
@@ -477,15 +472,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             spacing: 12,
             runSpacing: 12,
             children: _genders.map((genderOption) {
-              final isSelected = gender == genderOption;
+              final isSelected = state.gender == genderOption;
               return ChoiceChip(
                 label: Text(genderOption),
                 selected: isSelected,
                 onSelected: (selected) {
                   if (selected) {
-                    setState(() {
-                      gender = genderOption;
-                    });
+                    context.read<OnboardingCubit>().setGender(genderOption);
                   }
                 },
                 selectedColor: Colors.blueGrey[200],
@@ -498,7 +491,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   // Topics Page
-  Widget _buildTopicsPage() {
+  Widget _buildTopicsPage(OnboardingState state) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -529,13 +522,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               itemCount: _topics.length,
               itemBuilder: (context, index) {
                 final topic = _topics[index];
-                final isSelected = selectedTopic == topic['id'];
+                final isSelected = state.selectedTopic == topic['id'];
 
                 return GestureDetector(
                   onTap: () {
-                    setState(() {
-                      selectedTopic = topic['id'];
-                    });
+                    context
+                        .read<OnboardingCubit>()
+                        .setSelectedTopic(topic['id']);
                   },
                   child: Container(
                     decoration: BoxDecoration(

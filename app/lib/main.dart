@@ -14,9 +14,9 @@ import 'package:vocafusion/config/custom_router.dart';
 import 'package:vocafusion/config/locator.dart';
 import 'package:vocafusion/cubits/auth_cubit.dart';
 import 'package:vocafusion/cubits/content_cubit.dart';
-import 'package:vocafusion/cubits/learning/biased_sorting_cubit.dart';
+import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
-import 'package:vocafusion/cubits/streak/streak_cubit.dart';
+import 'package:vocafusion/cubits/streak_cubit.dart';
 import 'package:vocafusion/startup.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -112,11 +112,11 @@ class MyApp extends StatelessWidget {
           lazy: false,
         ),
         BlocProvider(
-          create: (context) => BiasedSortingCubit()..sync(context),
+          create: (context) => StreakCubit(),
           lazy: false,
         ),
         BlocProvider(
-          create: (context) => StreakCubit(),
+          create: (context) => LearningSessionCubit()..sync(context),
           lazy: false,
         ),
       ],

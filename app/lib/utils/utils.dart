@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sembast/sembast_io.dart';
-import 'package:vocafusion/cubits/streak/streak_cubit.dart';
+import 'package:vocafusion/cubits/streak_cubit.dart';
 
 double mapLinear(double value, double inputMin, double inputMax,
     double outputMin, double outputMax) {

@@ -7,19 +7,20 @@ import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:vocafusion/utils/utils.dart';
 
 class OnboardingState extends Equatable {
-  final String? identifyAs;
-  final String? grade;
-  final List<String> focusOn;
-  final int desiredDuration;
-
-  final bool skipLearning;
+  final String? nativeLanguage;
+  final String? targetLanguage;
+  final String? languageLevel;
+  final String? age;
+  final String? gender;
+  final String? selectedTopic;
 
   const OnboardingState({
-    this.identifyAs,
-    this.grade,
-    this.focusOn = const [],
-    this.desiredDuration = 5,
-    this.skipLearning = false,
+    this.nativeLanguage,
+    this.targetLanguage,
+    this.languageLevel,
+    this.age,
+    this.gender,
+    this.selectedTopic,
   });
 
   OnboardingState copyWith({
@@ -28,79 +29,83 @@ class OnboardingState extends Equatable {
     List<String>? focusOn,
     int? desiredDuration,
     bool? skipLearning,
+    String? nativeLanguage,
+    String? targetLanguage,
+    String? languageLevel,
+    String? age,
+    String? gender,
+    String? selectedTopic,
   }) {
     return OnboardingState(
-      identifyAs: identifyAs ?? this.identifyAs,
-      grade: grade ?? this.grade,
-      focusOn: focusOn ?? this.focusOn,
-      desiredDuration: desiredDuration ?? this.desiredDuration,
-      skipLearning: skipLearning ?? this.skipLearning,
+      nativeLanguage: nativeLanguage ?? this.nativeLanguage,
+      targetLanguage: targetLanguage ?? this.targetLanguage,
+      languageLevel: languageLevel ?? this.languageLevel,
+      age: age ?? this.age,
+      gender: gender ?? this.gender,
+      selectedTopic: selectedTopic ?? this.selectedTopic,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [identifyAs, grade, focusOn, desiredDuration, skipLearning];
+  List<Object?> get props => [
+        nativeLanguage,
+        targetLanguage,
+        languageLevel,
+        age,
+        gender,
+        selectedTopic
+      ];
 }
 
 class OnboardingCubit extends HydratedCubit<OnboardingState> {
   OnboardingCubit() : super(OnboardingState());
 
-  void identifyAs(String identifyAs) {
-    emit(state.copyWith(identifyAs: identifyAs));
+  // New methods for onboarding screen
+  void setNativeLanguage(String language) {
+    emit(state.copyWith(nativeLanguage: language));
   }
 
-  int _currentI = 0;
-  void grade(String grade) async {
-    emit(state.copyWith(grade: grade));
-
-    final seenI = ++_currentI;
-    if (seenI != _currentI) return;
+  void setTargetLanguage(String language) {
+    emit(state.copyWith(targetLanguage: language));
   }
 
-  void desiredDuration(int desiredDuration) {
-    emit(state.copyWith(desiredDuration: desiredDuration));
+  void setLanguageLevel(String level) {
+    emit(state.copyWith(languageLevel: level));
   }
 
-  void toggleFocusOn(
-    String focusOn, {
-    required BuildContext context,
-  }) async {
-    final focusOns = List<String>.from(state.focusOn);
-    if (focusOns.contains(focusOn)) {
-      focusOns.remove(focusOn);
-    } else {
-      focusOns.add(focusOn);
-    }
-    emit(state.copyWith(focusOn: focusOns));
+  void setAge(String age) {
+    emit(state.copyWith(age: age));
+  }
 
-    try {
-      await prepareForLearning(context);
-      emit(state.copyWith(skipLearning: false));
-    } catch (e) {
-      emit(state.copyWith(skipLearning: true));
-    }
+  void setGender(String gender) {
+    emit(state.copyWith(gender: gender));
+  }
+
+  void setSelectedTopic(String topic) {
+    emit(state.copyWith(selectedTopic: topic));
   }
 
   @override
   OnboardingState? fromJson(Map<String, dynamic> json) {
-    // return OnboardingState(
-    //   identifyAs: json["identifyAs"],
-    //   grade: json["grade"],
-    //   focusOn: List<String>.from(json["focusOn"]),
-    // );
+    return OnboardingState(
+      nativeLanguage: json["nativeLanguage"],
+      targetLanguage: json["targetLanguage"],
+      languageLevel: json["languageLevel"],
+      age: json["age"],
+      gender: json["gender"],
+      selectedTopic: json["selectedTopic"],
+    );
   }
 
   @override
   Map<String, dynamic>? toJson(OnboardingState state) {
     return {
-      "identifyAs": state.identifyAs,
-      "grade": state.grade,
-      "focusOn": state.focusOn,
+      "nativeLanguage": state.nativeLanguage,
+      "targetLanguage": state.targetLanguage,
+      "languageLevel": state.languageLevel,
+      "age": state.age,
+      "gender": state.gender,
+      "selectedTopic": state.selectedTopic,
     };
   }
-}
-
-extension on OnboardingCubit {
-  Future<void> prepareForLearning(BuildContext context) async {}
 }

@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:vocafusion/cubits/learning/biased_sorting_cubit.dart';
+import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
-import 'package:vocafusion/cubits/streak/streak_cubit.dart';
+import 'package:vocafusion/cubits/streak_cubit.dart';
 import 'package:vocafusion/models/modeling.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/quiz_widget.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/widgets.dart';
@@ -41,7 +41,7 @@ class _LearningScreenState extends State<LearningScreen> {
     itemPositionsListener.itemPositions
         .addListener(listenToItemPositionChanges);
 
-    reactToStateChanges(context.read<BiasedSortingCubit>().state);
+    reactToStateChanges(context.read<LearningSessionCubit>().state);
   }
 
   void listenToItemPositionChanges() {
@@ -105,9 +105,9 @@ class _LearningScreenState extends State<LearningScreen> {
 
   List<WordCard> forLearning = [];
 
-  void reactToStateChanges(BiasedSortingState state) {
+  void reactToStateChanges(LearningSessionState state) {
     setState(() {
-      forLearning = state.sorted;
+      forLearning = state.words;
       pointer = 1;
     });
   }
@@ -121,9 +121,9 @@ class _LearningScreenState extends State<LearningScreen> {
           appBar: CustomAppBar(),
           body: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: BlocListener<BiasedSortingCubit, BiasedSortingState>(
+              child: BlocListener<LearningSessionCubit, LearningSessionState>(
                 listenWhen: (p, c) {
-                  return !listEquals(p.sorted, c.sorted);
+                  return !listEquals(p.words, c.words);
                 },
                 listener: (context, state) => reactToStateChanges(state),
                 child: LayoutBuilder(builder: (context, c) {
@@ -150,19 +150,37 @@ class _LearningScreenState extends State<LearningScreen> {
                         },
                         child: Builder(builder: (ctx) {
                           final item = context
-                              .read<BiasedSortingCubit>()
+                              .read<LearningSessionCubit>()
                               .state
-                              .sorted
+                              .itemList
                               .elementAtOrNull(i);
 
                           if (item == null) return SizedBox.shrink();
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: QuizWidget(
-                              item: item,
-                            ),
-                          );
+                          // Switch based on item type
+                          switch (item.type) {
+                            case LearningItemType.testCurrentFlow:
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: QuizWidget(
+                                  item: item.word,
+                                ),
+                              );
+                            case LearningItemType.learning:
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: CardWidget(
+                                  item: item.word,
+                                ),
+                              );
+                            default:
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: QuizWidget(
+                                  item: item.word,
+                                ),
+                              );
+                          }
                         }),
                       );
                     },
@@ -302,7 +320,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         IconButton.filledTonal(
           onPressed: () {
-            // context.read<BiasedSortingCubit>().sort();
+            // context.read<LearningSessionCubit>().sort();
             context.read<StreakCubit>().incrementCardCount();
             context.read<StreakCubit>().showCongratsIfNeeded(context);
           },
