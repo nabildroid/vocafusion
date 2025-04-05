@@ -37,7 +37,7 @@ final GoRouter router = GoRouter(
     //   return "/learn";
     // }
   },
-  initialLocation: "/onboarding",
+  initialLocation: "/learn",
   routes: [
     GoRoute(
       path: "/learn",
