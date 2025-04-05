@@ -187,6 +187,13 @@ class _LearningScreenState extends State<LearningScreen> {
                   );
                 }),
               )),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () async {
+              await context.read<LearningSessionCubit>().processData();
+              next();
+            },
+            child: Text("Next"),
+          ),
           bottomNavigationBar: CustomNavigationBar(
             onFavoriteTap: () {
               context.go('/learn/favorites');
@@ -247,24 +254,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: BlocBuilder<StreakCubit, StreakState>(
           builder: (context, state) {
             return CircleAvatar(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "${state.currentStreak}",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blueGrey.shade800,
-                    ),
-                  ),
-                  if (state.currentStreak > 0)
-                    Icon(
-                      Icons.local_fire_department,
-                      size: 10,
-                      color: Colors.orange,
-                    ),
-                ],
+              child: Text(
+                "${state.currentStreak}",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueGrey.shade800,
+                ),
               ),
               backgroundColor: Colors.grey.shade200,
               radius: 8,
@@ -320,7 +316,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         IconButton.filledTonal(
           onPressed: () {
-            // context.read<LearningSessionCubit>().sort();
             context.read<StreakCubit>().incrementCardCount();
             context.read<StreakCubit>().showCongratsIfNeeded(context);
           },
