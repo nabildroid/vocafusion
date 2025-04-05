@@ -8,9 +8,11 @@ import 'package:go_router/go_router.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:vocafusion/cubits/learning/biased_sorting_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
+import 'package:vocafusion/cubits/streak/streak_cubit.dart';
 import 'package:vocafusion/models/modeling.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/widgets.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/word_card.dart';
+import 'package:vocafusion/utils/utils.dart';
 
 class LearningScreen extends StatefulWidget {
   @override
@@ -223,48 +225,85 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: true,
       leading: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: CircleAvatar(
-          child: Text("3"),
-          backgroundColor: Colors.grey.shade200,
-          radius: 8,
+        child: BlocBuilder<StreakCubit, StreakState>(
+          builder: (context, state) {
+            return CircleAvatar(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "${state.currentStreak}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey.shade800,
+                    ),
+                  ),
+                  if (state.currentStreak > 0)
+                    Icon(
+                      Icons.local_fire_department,
+                      size: 10,
+                      color: Colors.orange,
+                    ),
+                ],
+              ),
+              backgroundColor: Colors.grey.shade200,
+              radius: 8,
+            );
+          },
         ),
       ),
       title: FractionallySizedBox(
         widthFactor: 0.8,
-        child: Container(
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Row(
-              children: [
-                Text("2/20",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.blueGrey.shade800,
-                      fontWeight: FontWeight.bold,
-                    )),
-                SizedBox(width: 4),
-                Expanded(
-                  child: LinearProgressIndicator(
-                    value: 0.2,
-                    minHeight: 12,
-                    borderRadius: BorderRadius.circular(80),
-                    backgroundColor: Colors.grey.shade300,
-                    valueColor:
-                        AlwaysStoppedAnimation(Colors.blueGrey.shade800),
-                  ),
+        child: BlocBuilder<StreakCubit, StreakState>(
+          builder: (context, state) {
+            final streakCubit = context.read<StreakCubit>();
+            final count = streakCubit.getTodayCardCount();
+            final progress = streakCubit.getDailyProgress();
+            final isCompleted = count >= 20;
+
+            return Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ],
-            )),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Row(
+                  children: [
+                    Text("$count/20",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isCompleted
+                              ? Colors.green
+                              : Colors.blueGrey.shade800,
+                          fontWeight: FontWeight.bold,
+                        )),
+                    SizedBox(width: 4),
+                    Expanded(
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 12,
+                        borderRadius: BorderRadius.circular(80),
+                        backgroundColor: Colors.grey.shade300,
+                        valueColor: AlwaysStoppedAnimation(isCompleted
+                            ? Colors.green
+                            : Colors.blueGrey.shade800),
+                      ),
+                    ),
+                  ],
+                ));
+          },
+        ),
       ),
       backgroundColor: Colors.transparent,
       elevation: 0,
       actions: [
         IconButton.filledTonal(
           onPressed: () {
-            context.read<BiasedSortingCubit>().sort();
+            // context.read<BiasedSortingCubit>().sort();
+            context.read<StreakCubit>().incrementCardCount();
+            context.read<StreakCubit>().showCongratsIfNeeded(context);
           },
           icon: Icon(Icons.diamond_outlined),
         ),

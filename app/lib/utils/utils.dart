@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sembast/sembast_io.dart';
+import 'package:vocafusion/cubits/streak/streak_cubit.dart';
 
 double mapLinear(double value, double inputMin, double inputMax,
     double outputMin, double outputMax) {
@@ -115,5 +118,29 @@ Future<T> waitForVariable<T>({
       throw TimeoutException('Timeout waiting for variable to be filled');
     }
     await Future.delayed(interval);
+  }
+}
+
+class StreakHelper {
+  /// Increments the card count and shows congrats if needed
+  static void incrementCardCount(BuildContext context) {
+    final streakCubit = context.read<StreakCubit>();
+    streakCubit.incrementCardCount();
+    streakCubit.showCongratsIfNeeded(context);
+  }
+
+  /// Gets the current daily progress (0.0 to 1.0)
+  static double getDailyProgress(BuildContext context) {
+    return context.read<StreakCubit>().getDailyProgress();
+  }
+
+  /// Gets the count of cards completed today
+  static int getTodayCardCount(BuildContext context) {
+    return context.read<StreakCubit>().getTodayCardCount();
+  }
+
+  /// Checks if the daily goal is completed
+  static bool hasDailyGoalCompleted(BuildContext context) {
+    return context.read<StreakCubit>().hasCompletedDailyGoal();
   }
 }
