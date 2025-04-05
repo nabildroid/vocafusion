@@ -10,6 +10,7 @@ import 'package:vocafusion/cubits/learning/biased_sorting_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
 import 'package:vocafusion/cubits/streak/streak_cubit.dart';
 import 'package:vocafusion/models/modeling.dart';
+import 'package:vocafusion/screens/learning_screen/widgets/quiz_widget.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/widgets.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/word_card.dart';
 import 'package:vocafusion/utils/utils.dart';
@@ -158,7 +159,7 @@ class _LearningScreenState extends State<LearningScreen> {
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 20),
-                            child: CardWidget(
+                            child: QuizWidget(
                               item: item,
                             ),
                           );
