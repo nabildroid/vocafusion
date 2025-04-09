@@ -2,8 +2,10 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocafusion/config/locator.dart';
+import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/repositories/user_repository.dart';
 
 // import 'package:posthog_flutter/posthog_flutter.dart';
@@ -20,24 +22,22 @@ final GoRouter router = GoRouter(
     // if (Platform.isAndroid) PosthogObserver(),
   ],
   redirect: (BuildContext context, GoRouterState state) async {
-    // final user = await locator.get<UserRepository>().getUser().timeout(
-    //       const Duration(milliseconds: 200), // todo, 200 is a random number
-    //       onTimeout: () => null,
-    //     );
+    final isReady =
+        context.read<LearningSessionCubit>().state.currentFlowId.isNotEmpty;
 
-    // if (state.fullPath == null) return null;
+    if (state.fullPath == null) return null;
 
-    // if (user == null) {
-    //   if (state.fullPath!.startsWith("/register") ||
-    //       state.fullPath!.startsWith("/onboarding")) return null;
-    //   return "/onboarding";
-    // } else {
-    //   if (state.fullPath!.startsWith("/learn") ||
-    //       state.fullPath!.startsWith("/favorites")) return null;
-    //   return "/learn";
-    // }
+    if (!isReady) {
+      if (state.fullPath!.startsWith("/register") ||
+          state.fullPath!.startsWith("/onboarding")) return null;
+      return "/onboarding";
+    } else {
+      if (state.fullPath!.startsWith("/learn") ||
+          state.fullPath!.startsWith("/favorites")) return null;
+      return "/learn";
+    }
   },
-  initialLocation: "/learn",
+  initialLocation: "/onboarding",
   routes: [
     GoRoute(
       path: "/learn",

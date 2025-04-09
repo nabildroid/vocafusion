@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/onboarding_cubit.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -46,21 +47,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<String> _genders = [
     'Male',
     'Female',
-    'Non-binary',
-    'Prefer not to say'
-  ];
-
-  final List<Map<String, dynamic>> _topics = [
-    {'id': 'science', 'title': 'Science & Technology', 'icon': Icons.science},
-    {'id': 'business', 'title': 'Business & Economics', 'icon': Icons.business},
-    {'id': 'arts', 'title': 'Arts & Literature', 'icon': Icons.palette},
-    {'id': 'travel', 'title': 'Travel & Culture', 'icon': Icons.flight},
-    {
-      'id': 'health',
-      'title': 'Health & Wellness',
-      'icon': Icons.health_and_safety
-    },
-    {'id': 'history', 'title': 'History & Politics', 'icon': Icons.history_edu},
   ];
 
   @override
@@ -337,11 +323,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               itemCount: _levels.length,
               itemBuilder: (context, index) {
                 final level = _levels[index];
-                final isSelected = state.languageLevel == level;
+                final isSelected = state.languageLevel == index + 1;
 
                 return GestureDetector(
                   onTap: () {
-                    context.read<OnboardingCubit>().setLanguageLevel(level);
+                    context.read<OnboardingCubit>().setLanguageLevel(index + 1);
                   },
                   child: Container(
                     decoration: BoxDecoration(
@@ -492,6 +478,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Topics Page
   Widget _buildTopicsPage(OnboardingState state) {
+    final flows = context.read<OnboardingCubit>().state.filtredFlows;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
@@ -519,16 +506,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
-              itemCount: _topics.length,
+              itemCount: flows?.length ?? 0,
               itemBuilder: (context, index) {
-                final topic = _topics[index];
-                final isSelected = state.selectedTopic == topic['id'];
+                final topic = flows![index];
+                final isSelected = state.selectedTopic == topic.id;
 
                 return GestureDetector(
                   onTap: () {
+                    context.read<OnboardingCubit>().setSelectedTopic(topic.id);
                     context
-                        .read<OnboardingCubit>()
-                        .setSelectedTopic(topic['id']);
+                        .read<LearningSessionCubit>()
+                        .setCurrentFlowId(topic.id);
                   },
                   child: Container(
                     decoration: BoxDecoration(
@@ -554,14 +542,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          topic['icon'],
+                          Icons.book,
                           size: 48,
                           color:
                               isSelected ? Colors.white : Colors.blueGrey[800],
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          topic['title'],
+                          topic.title,
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontWeight: FontWeight.bold,

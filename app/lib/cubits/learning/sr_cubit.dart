@@ -26,6 +26,7 @@ class SRState extends Equatable {
   SRState copyWith({
     List<WordCard>? all,
     List<SREntry>? entries,
+    int? index,
   }) {
     return SRState(
       all: all ?? this.all,
@@ -51,7 +52,7 @@ class SrCubit extends Cubit<SRState> {
 
     final entries = all.map((e) {
       // the higher the spaced repetition score the lower the priority
-      final sigmoiedSR = 1 / (1 + sr.getCardScore(e.id));
+      final sigmoiedSR = 1 / (1 + sr.getCardScore(e.srID));
 
       final score = sigmoiedSR;
 
@@ -67,22 +68,22 @@ class SrCubit extends Cubit<SRState> {
     bool? secondTry,
   }) {
     if (answer == false) {
-      sr.recordRecall(word.id, isIncorrect: true);
+      sr.recordRecall(word.srID, isIncorrect: true);
     } else {
       if (secondTry == true) {
         sr.recordRecall(
-          word.id,
+          word.srID,
           isHard: true,
         );
       } else {
         sr.recordRecall(
-          word.id,
+          word.srID,
           isGood: true,
         );
       }
     }
 
-    // if (state.nowQuiz == null) throw Exception("no current quiz to be answred");
+    _refreshQueue();
   }
 
   @override

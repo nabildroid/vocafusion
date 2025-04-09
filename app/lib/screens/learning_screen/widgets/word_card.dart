@@ -103,7 +103,7 @@ class _CardWidgetState extends State<CardWidget> {
           ),
           const SizedBox(height: 4),
           Text(
-            widget.item.definition,
+            widget.item.targetDefinition,
             style: TextStyle(
               fontSize: 12,
               fontStyle: FontStyle.italic,

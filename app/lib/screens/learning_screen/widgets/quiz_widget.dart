@@ -1,14 +1,18 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vocafusion/cubits/learning/sr_cubit.dart';
 import 'package:vocafusion/models/modeling.dart';
 
 class QuizWidget extends StatefulWidget {
   final WordCard item;
+  final VoidCallback? onCorrectAnswer;
 
   const QuizWidget({
     super.key,
     required this.item,
+    this.onCorrectAnswer,
   });
 
   @override
@@ -59,7 +63,7 @@ class _QuizWidgetState extends State<QuizWidget> {
 
   // Generate random indices of words to hide in the definition
   List<int> _generateHiddenWordIndices() {
-    final definitionWords = widget.item.definition.split(' ');
+    final definitionWords = widget.item.targetDefinition.split(' ');
     // Don't hide words if definition is too short
     if (definitionWords.length < 4) return [];
 
@@ -77,7 +81,7 @@ class _QuizWidgetState extends State<QuizWidget> {
 
   // Create a RichText with some words hidden in the definition
   Widget _buildDefinitionWithHiddenWords() {
-    final definitionWords = widget.item.definition.split(' ');
+    final definitionWords = widget.item.targetDefinition.split(' ');
     final List<InlineSpan> spans = [];
 
     for (int i = 0; i < definitionWords.length; i++) {
@@ -163,18 +167,30 @@ class _QuizWidgetState extends State<QuizWidget> {
                   textAlign: TextAlign.center,
                 );
               },
-              onAcceptWithDetails: (context) {
+              onAcceptWithDetails: (ctx) {
+                context.read<SrCubit>().recordQuizAnswer(
+                      widget.item,
+                      isCorrect,
+                      secondTry: hasAttempted,
+                    );
                 setState(() {
                   hasAttempted = true;
-                  isCorrect = context.data == widget.item.word;
+                  isCorrect = true;
+                  if (ctx.data == widget.item.word) {
+                    Future.delayed(Duration(seconds: 1), () {
+                      widget.onCorrectAnswer?.call();
+                    });
+                  }
                 });
               },
-              onWillAcceptWithDetails: (context) {
-                return context.data == widget.item.word;
+              onWillAcceptWithDetails: (ctx) {
+                return ctx.data == widget.item.word;
               },
               onLeave: (data) {
+                context.read<SrCubit>().recordQuizAnswer(widget.item, false);
+
                 setState(() {
-                  hasAttempted = false;
+                  hasAttempted = true;
                   isCorrect = false;
                 });
               },

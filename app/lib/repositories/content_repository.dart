@@ -9,199 +9,77 @@ import 'package:vocafusion/models/modeling.dart';
 
 class ContentRepository extends AuthorizedDio {
   final Database _db = locator.get();
-  final _flowStore = stringMapStoreFactory.store("flows");
-  final _wordsStore = stringMapStoreFactory.store("words");
-  final _quizzesStore = stringMapStoreFactory.store("quizzes");
-
   final isOnline = BehaviorSubject<bool>.seeded(false);
-
-  final flowsStream = BehaviorSubject<List<WordsFlow>>();
-  final wordsStream = BehaviorSubject<List<WordCard>>();
-  final quizzesStream = BehaviorSubject<List<Quiz>>();
 
   ContentRepository() : super(rawHttp: AuthorizedDio.defaultHttp) {
     Connectivity().onConnectivityChanged.listen(
           (status) => isOnline.add(!status.contains(ConnectivityResult.none)),
         );
+
+    completerhttp.complete(rawHttp);
   }
-}
 
-extension QuizzesContentRepository on ContentRepository {
-  Future<void> sync({required List<Quiz> onlineData}) async {
-    if (onlineData.isEmpty) return;
+  Future<List<WordsFlow>> getFlowsByFilters(FlowFilter filter) async {
+    final reponse = await (await http)
+        .get("flows/${filter.nativeLanguage}/${filter.targetLanguage}");
 
-    final outdated = await _quizzesStore.find(
-      _db,
-      finder: Finder(
-        filter: Filter.equals("flowId", onlineData.first.flowId),
-      ),
+    return List.from(reponse.data["flows"])
+        .map((e) => WordsFlow(
+              id: e["id"],
+              targetLanguage: filter.targetLanguage,
+              nativeLanguage: filter.nativeLanguage,
+              level: 1,
+              title: e["title"],
+            ))
+        .toList();
+  }
+
+  Future<List<WordsFlow>> getFlowsByParentFlowId(String flowId) async {
+    final reponse = await (await http).get("flows/$flowId");
+
+    return List.from(reponse.data["flows"])
+        .map((e) => WordsFlow(
+              id: e["id"],
+              targetLanguage: "FR",
+              nativeLanguage: "EN",
+              level: 1,
+              title: e["title"],
+            ))
+        .toList();
+  }
+
+  Future<WordsFlow> getFlowsById(String flowId) async {
+    final reponse = await (await http).get("flow/$flowId");
+    return WordsFlow(
+      id: "ezfze",
+      targetLanguage: "fr",
+      nativeLanguage: "en",
+      level: 2,
+      title: "helllo world",
     );
-
-    await _db.transaction((txn) async {
-      for (final quiz in outdated) {
-        await _quizzesStore.record(quiz.key).delete(txn);
-      }
-
-      for (final quiz in onlineData) {
-        await _quizzesStore
-            .record(quiz.id)
-            .put(txn, quiz.toJson(), merge: true);
-      }
-    });
   }
 
-  Future<List<Quiz>> offlineData(String flow) async {
-    final records = await _quizzesStore.find(
-      _db,
-      finder: Finder(
-        filter: Filter.equals("flowId", flow),
-      ),
-    );
-
-    return records.map((e) => Quiz.fromJson(e.value)).toList();
-  }
-
-  Future<List<Quiz>> onlineData(String flow) async {
-    // final response = await (await http).get("material/quizzes/$flow");
-
-    // final data = (response.data as List).map((e) => Quiz.fromJson(e)).toList();
-    final data = DummyQuizzes;
-    unawaited(sync(onlineData: data));
-
-    return data;
-  }
-
-  BehaviorSubject<List<Quiz>> quizzes(String flow) {
-    final offline = offlineData(flow);
-    bool isOnlineDelivered = false;
-    offline.then((val) {
-      if (!isOnlineDelivered) quizzesStream.add(val);
-    });
-
-    if (isOnline.value) {
-      onlineData(flow).then(quizzesStream.add).then((_) {
-        isOnlineDelivered = true;
-      });
-    } else {
-      isOnline.firstWhere((e) => e).then((_) {
-        onlineData(flow).then(quizzesStream.add);
-      });
-    }
-
-    return quizzesStream;
-  }
-}
-
-extension WordsContentRepository on ContentRepository {
-  Future<void> sync({required List<WordCard> onlineData}) async {
-    if (onlineData.isEmpty) return;
-
-    final outdated = await _wordsStore.find(
-      _db,
-      finder: Finder(
-        filter: Filter.equals("flowId", onlineData.first.flowId),
-      ),
-    );
-
-    await _db.transaction((txn) async {
-      for (final word in outdated) {
-        await _wordsStore.record(word.key).delete(txn);
-      }
-
-      for (final word in onlineData) {
-        await _wordsStore.record(word.id).put(txn, word.toJson());
-      }
-    });
-  }
-
-  Future<List<WordCard>> offlineData(String flow) async {
-    final records = await _wordsStore.find(
-      _db,
-      finder: Finder(
-        filter: Filter.equals("flowId", flow),
-      ),
-    );
-
-    return records.map((e) => WordCard.fromJson(e.value)).toList();
-  }
-
-  Future<List<WordCard>> onlineData(String flow) async {
-    // final response = await (await http).get("material/WordCardzes/$flow");
-
-    // final data = (response.data as List).map((e) => WordCard.fromJson(e)).toList();
-    final data = DummyCards;
-    unawaited(sync(onlineData: data));
-
-    return data;
-  }
-
-  BehaviorSubject<List<WordCard>> words(String flow) {
-    final offline = offlineData(flow);
-    bool isOnlineDelivered = false;
-    offline.then((val) {
-      if (!isOnlineDelivered) wordsStream.add(val);
-    });
-
-    if (isOnline.value) {
-      onlineData(flow).then(wordsStream.add).then((_) {
-        isOnlineDelivered = true;
-      });
-    } else {
-      isOnline.firstWhere((e) => e).then((_) {
-        onlineData(flow).then(wordsStream.add);
-      });
-    }
-
-    return wordsStream;
-  }
-}
-
-extension FlowContentRepository on ContentRepository {
-  Future<void> sync({required List<WordsFlow> onlineData}) async {
-    if (onlineData.isEmpty) return;
-    await _db.transaction((txn) async {
-      for (final flow in onlineData) {
-        await _flowStore.record(flow.id).put(txn, flow.toJson());
-      }
-    });
-  }
-
-  Future<List<WordsFlow>> offlineData() async {
-    final records = await _flowStore.find(_db);
-    return records.map((e) => WordsFlow.fromJson(e.value)).toList();
-  }
-
-  Future<List<WordsFlow>> onlineData(FlowFilter filter) async {
-    // final response = await (await http).get("grouping/timetables");
-
-    // final data =
-    //     (response.data as List).map((e) => WordsFlow.fromJson(e)).toList();
-    final data = DummyFlows;
-    unawaited(sync(onlineData: data));
-
-    return data;
-  }
-
-  BehaviorSubject<List<WordsFlow>> flows(FlowFilter filter) {
-    final offline = offlineData();
-    bool isOnlineDelivered = false;
-    offline.then((val) {
-      if (!isOnlineDelivered) flowsStream.add(val);
-    });
-
-    try {
-      if (isOnline.value) {
-        onlineData(filter).then(flowsStream.add).then((_) {
-          isOnlineDelivered = true;
-        });
-      } else {
-        isOnline.firstWhere((e) => e).then((_) {
-          onlineData(filter).then(flowsStream.add);
-        });
-      }
-    } catch (e) {}
-
-    return flowsStream;
+  Future<List<WordCard>> getWordsByFlowId(String flowId) async {
+    final reponse = await (await http).get("words/$flowId");
+    return List.from(reponse.data["words"])
+        .map((e) => WordCard(
+              context: e["text"],
+              aloneContext: e["text"],
+              previousSummary: e["text"],
+              id: e["id"],
+              word: e["word"],
+              targetDefinition: e["targetDefinition"],
+              nativeDefinition: e["nativeDefinition"],
+              previousCard: e["previousCard"],
+              flowId: flowId,
+              level: "1",
+              nativeLanguage: "fr",
+              targetLanguage: "en",
+              nativeWord: e["word"],
+              transliteration: e["word"],
+              audioUrl: "efefze",
+            ))
+        .toList();
   }
 }
 

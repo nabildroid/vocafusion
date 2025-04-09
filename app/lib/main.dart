@@ -16,7 +16,9 @@ import 'package:vocafusion/cubits/auth_cubit.dart';
 import 'package:vocafusion/cubits/content_cubit.dart';
 import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
+import 'package:vocafusion/cubits/onboarding_cubit.dart';
 import 'package:vocafusion/cubits/streak_cubit.dart';
+import 'package:vocafusion/repositories/preferences_repository.dart';
 import 'package:vocafusion/startup.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -71,13 +73,16 @@ void main() async {
   await dir.create(recursive: true);
 
   final db = await databaseFactoryIo.openDatabase(
-    join(dir.path, 'me.laknabil.vocafusion_v0.02.db'),
+    join(dir.path, 'me.laknabil.vocafusion_v0.09.db'),
   );
   await setUpLocator(sembastInstance: db);
 
-  HydratedBloc.storage = await HydratedStorage.build(
-    storageDirectory: dir,
-  );
+  final blocHydartionPath = Directory(
+      join(dir.path, 'hydrated_bloc${PreferenceExtension.globalPrefix}'));
+  await blocHydartionPath.create(recursive: true);
+
+  HydratedBloc.storage =
+      await HydratedStorage.build(storageDirectory: blocHydartionPath);
 
   /////
   await initializeDateFormatting(Platform.localeName);
@@ -104,7 +109,7 @@ class MyApp extends StatelessWidget {
           lazy: false,
         ),
         BlocProvider(
-          create: (context) => ContentCubit()..sync(context),
+          create: (context) => ContentCubit(),
           lazy: false,
         ),
         BlocProvider(
@@ -113,6 +118,10 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => StreakCubit(),
+          lazy: false,
+        ),
+        BlocProvider(
+          create: (context) => OnboardingCubit(),
           lazy: false,
         ),
         BlocProvider(

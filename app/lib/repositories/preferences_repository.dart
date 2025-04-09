@@ -33,8 +33,8 @@ class PreferenceRepository {
   String get logIdentifier => '[PreferenceRepository]';
 }
 
-extension on PreferenceRepository {
-  static const globalPrefix = "1";
+extension PreferenceExtension on PreferenceRepository {
+  static const globalPrefix = "3";
 
   Future<bool?> getBool(String key) async {
     final prefs = await _prefs;

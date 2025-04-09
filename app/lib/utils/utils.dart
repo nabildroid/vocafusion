@@ -23,27 +23,42 @@ double mapLinear(double value, double inputMin, double inputMax,
   return slope * clamped + intercept;
 }
 
-// weighted random selection
-T weightedRandomSelection<T>(List<T> items, List<double> weights) {
-  assert(items.length == weights.length);
+/// A generic weighted random selection function that can work with any type.
+///
+/// Returns an item from [items] where the probability of selection is proportional
+/// to its weight in [weights]. Both lists must be the same length.
+///
+/// - [items]: List of items to choose from
+/// - [weights]: List of weights corresponding to each item
+/// - [random]: Optional Random instance for testing or seed control
+///
+/// Example:
+/// ```
+/// final result = weightedRandomSelect(['A', 'B', 'C'], [0.7, 0.2, 0.1]);
+/// ```
+T weightedRandomSelect<T>(List<T> items, List<double> weights,
+    {Random? random}) {
+  assert(items.length == weights.length && items.isNotEmpty);
 
-  final stableTime = 1000 * 60 * 15;
-  final r = Random(DateTime.now().millisecondsSinceEpoch ~/ stableTime);
+  // Use provided random or create a new one
+  final r = random ?? Random();
 
+  // Normalize weights
   final totalWeight = weights.reduce((a, b) => a + b);
-  final random = r.nextDouble() * totalWeight;
+  final normalizedWeights = weights.map((w) => w / totalWeight).toList();
 
-  double sum = 0;
+  // Select based on cumulative probability
+  final randomValue = r.nextDouble();
+  double cumulativeWeight = 0.0;
+
   for (int i = 0; i < items.length; i++) {
-    sum += weights[i];
-    if (random < sum) {
-      if (r.nextDouble() < 0.05) {
-        return items[r.nextInt(items.length)];
-      }
+    cumulativeWeight += normalizedWeights[i];
+    if (randomValue <= cumulativeWeight) {
       return items[i];
     }
   }
 
+  // In case of floating-point rounding issues, return the last item
   return items.last;
 }
 

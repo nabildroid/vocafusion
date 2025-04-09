@@ -187,7 +187,7 @@ class FavoriteWordCard extends StatelessWidget {
           ),
           SizedBox(height: 8),
           Text(
-            word.definition,
+            word.targetDefinition,
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey.shade700,

@@ -214,7 +214,7 @@ class _FlashbackWidgetState extends State<FlashbackWidget> {
                       children: [
                         // Definition
                         Text(
-                          widget.item.definition,
+                          widget.item.targetDefinition,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade700,
@@ -414,7 +414,7 @@ class _ContextualFlashbackWidgetState extends State<ContextualFlashbackWidget> {
                 children: [
                   // First word - simplified
                   _buildSimpleTimelineItem(
-                    widget.item1.definition,
+                    widget.item1.targetDefinition,
                     context1,
                     false, // not middle item
                   ),
@@ -433,7 +433,7 @@ class _ContextualFlashbackWidgetState extends State<ContextualFlashbackWidget> {
                   // MIDDLE ITEM (focus) - more prominent
                   _buildMiddleTimelineItem(
                     widget.item2.word,
-                    widget.item2.definition,
+                    widget.item2.targetDefinition,
                     context2,
                   ),
 
@@ -450,7 +450,7 @@ class _ContextualFlashbackWidgetState extends State<ContextualFlashbackWidget> {
 
                   // Third word - simplified
                   _buildSimpleTimelineItem(
-                    widget.item3.definition,
+                    widget.item3.targetDefinition,
                     context3,
                     false, // not middle item
                   ),

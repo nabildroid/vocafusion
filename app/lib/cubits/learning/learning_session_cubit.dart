@@ -2,9 +2,11 @@ import 'dart:collection';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocafusion/models/modeling.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
+import 'package:vocafusion/utils/utils.dart';
 
 // Learning item type enum
 enum LearningItemType {
@@ -35,7 +37,7 @@ class LearningSessionState {
   final List<LearningItem> itemList; // Changed from Queue to List
   final String currentFlowId;
   final List<String> failedTests;
-  final List<WordCard> words; // Add words from SrCubit
+  final List<SREntry> words; // Add words from SrCubit
 
   const LearningSessionState({
     required this.itemList, // Changed from itemQueue to itemList
@@ -48,7 +50,7 @@ class LearningSessionState {
     List<LearningItem>? itemList, // Changed from itemQueue to itemList
     String? currentFlowId,
     List<String>? failedTests,
-    List<WordCard>? words,
+    List<SREntry>? words,
   }) {
     return LearningSessionState(
       itemList: itemList ?? this.itemList, // Changed from itemQueue to itemList
@@ -60,7 +62,7 @@ class LearningSessionState {
 }
 
 // Learning session cubit
-class LearningSessionCubit extends Cubit<LearningSessionState> {
+class LearningSessionCubit extends HydratedCubit<LearningSessionState> {
   LearningSessionCubit()
       : super(LearningSessionState(
           itemList: [], // Changed from Queue to empty List
@@ -68,6 +70,23 @@ class LearningSessionCubit extends Cubit<LearningSessionState> {
           failedTests: [],
           words: [],
         ));
+
+  @override
+  Map<String, dynamic> toJson(LearningSessionState state) {
+    return {
+      'currentFlowId': state.currentFlowId,
+    };
+  }
+
+  @override
+  LearningSessionState fromJson(Map<String, dynamic> json) {
+    return LearningSessionState(
+      itemList: [],
+      currentFlowId: json['currentFlowId'] as String? ?? '',
+      failedTests: [],
+      words: [],
+    );
+  }
 
   void setCurrentFlowId(String flowId) async {
     emit(state.copyWith(currentFlowId: flowId));
@@ -78,14 +97,12 @@ class LearningSessionCubit extends Cubit<LearningSessionState> {
   ) async {
     // Get data from SrCubit
 
-    final words = entries.map((e) => e.value).toList();
-
     // Update words in state
-    emit(state.copyWith(words: words));
+    emit(state.copyWith(words: entries));
 
     // If current flow is not established, pick the first one
-    if (state.currentFlowId.isEmpty && words.isNotEmpty) {
-      setCurrentFlowId(words.first.flowId);
+    if (state.currentFlowId.isEmpty && entries.isNotEmpty) {
+      setCurrentFlowId(entries.first.value.flowId);
     }
 
     // Process data if list is empty and we have a current flow
@@ -99,15 +116,23 @@ class LearningSessionCubit extends Cubit<LearningSessionState> {
       return;
     }
 
-    final random = Random(_getHourlySeed());
+    final random = Random();
 
     // Filter words by flow
     final currentFlowWords = state.words
-        .where((word) => word.flowId == state.currentFlowId)
+        .where((word) => word.value.flowId == state.currentFlowId)
         .toList();
     final otherFlowWords = state.words
-        .where((word) => word.flowId != state.currentFlowId)
+        .where((word) => word.value.flowId != state.currentFlowId)
         .toList();
+
+    // remover the other flows that was never been touched, SR score (key) == 1
+    final touchedFlows = otherFlowWords.fold(<String>{}, (acc, v) {
+      if (v.key != 1) acc.add(v.value.flowId);
+      return acc;
+    });
+    otherFlowWords
+        .removeWhere((word) => !touchedFlows.contains(word.value.flowId));
 
     // Get the last learning item to determine the next word in order
     LearningItem? lastLearningItem;
@@ -121,41 +146,48 @@ class LearningSessionCubit extends Cubit<LearningSessionState> {
     // Find the next word for learning
     WordCard? nextLearningWord;
     if (lastLearningItem != null) {
-      // Find the word that comes after the last learning word
-      final index = currentFlowWords
-          .indexWhere((word) => word.id == lastLearningItem?.id);
-      if (index != -1 && index < currentFlowWords.length - 1) {
-        nextLearningWord = currentFlowWords[index + 1];
-      }
+      nextLearningWord = currentFlowWords
+          .firstWhere((e) => e.value.previousCard == lastLearningItem!.word.id)
+          .value;
     } else if (currentFlowWords.isNotEmpty) {
       // If no learning word in queue, start from the beginning
-      nextLearningWord = currentFlowWords[0];
+      nextLearningWord = currentFlowWords[0].value;
     }
 
     // Define the weights
-    const double learningWeight = 0.7;
-    const double testCurrentFlowWeight = 0.1;
-    const double testOtherFlowWeight = 0.2;
+    const double learningWeight = 1;
+    const double testCurrentFlowWeight = 0.4;
+    const double testOtherFlowWeight = 0.3;
     const double feedbackCurrentFlowWeight = 0.2;
     const double feedbackOtherFlowWeight = 0.3;
 
-    // Create a list of options with their weights
-    List<MapEntry<LearningItemType, double>> options = [];
+    // Create options and weights lists for weighted selection
+    List<LearningItemType> options = [];
+    List<double> weights = [];
 
     // Always add learning option if there's a next learning word
     if (nextLearningWord != null) {
-      options.add(MapEntry(LearningItemType.learning, learningWeight));
+      options.add(LearningItemType.learning);
+      weights.add(learningWeight);
     }
 
-    // Add test options
+    // Add currentFlow test options
     if (currentFlowWords.isNotEmpty) {
-      options.add(
-          MapEntry(LearningItemType.testCurrentFlow, testCurrentFlowWeight));
+      final sawWords =
+          state.itemList.any((e) => e.type == LearningItemType.learning);
+      final previouslyTestedWords = currentFlowWords.any((e) => e.key != 1);
+      if (sawWords || previouslyTestedWords) {
+        options.add(LearningItemType.testCurrentFlow);
+        weights.add(testCurrentFlowWeight);
+      }
     }
 
     if (otherFlowWords.isNotEmpty) {
-      options
-          .add(MapEntry(LearningItemType.testOtherFlow, testOtherFlowWeight));
+      final previouslyTested = otherFlowWords.any((e) => e.key != 1);
+      if (previouslyTested) {
+        options.add(LearningItemType.testOtherFlow);
+        weights.add(testOtherFlowWeight);
+      }
     }
 
     // Add feedback options only if there are failed tests
@@ -163,7 +195,8 @@ class LearningSessionCubit extends Cubit<LearningSessionState> {
     List<String> otherFlowFailedTests = [];
 
     for (final testId in state.failedTests) {
-      final isCurrentFlow = currentFlowWords.any((word) => word.id == testId);
+      final isCurrentFlow =
+          currentFlowWords.any((word) => word.value.id == testId);
       if (isCurrentFlow) {
         currentFlowFailedTests.add(testId);
       } else {
@@ -172,33 +205,19 @@ class LearningSessionCubit extends Cubit<LearningSessionState> {
     }
 
     if (currentFlowFailedTests.isNotEmpty) {
-      options.add(MapEntry(
-          LearningItemType.feedbackCurrentFlow, feedbackCurrentFlowWeight));
+      options.add(LearningItemType.feedbackCurrentFlow);
+      weights.add(feedbackCurrentFlowWeight);
     }
 
     if (otherFlowFailedTests.isNotEmpty) {
-      options.add(MapEntry(
-          LearningItemType.feedbackOtherFlow, feedbackOtherFlowWeight));
+      options.add(LearningItemType.feedbackOtherFlow);
+      weights.add(feedbackOtherFlowWeight);
     }
 
-    // Normalize weights
-    double totalWeight = options.fold(0.0, (sum, option) => sum + option.value);
-    final normalizedOptions = options
-        .map((option) => MapEntry(option.key, option.value / totalWeight))
-        .toList();
-
-    // Select an option based on weighted random
-    double randomValue = random.nextDouble();
-    double cumulativeWeight = 0.0;
-    LearningItemType? selectedType;
-
-    for (final option in normalizedOptions) {
-      cumulativeWeight += option.value;
-      if (randomValue <= cumulativeWeight) {
-        selectedType = option.key;
-        break;
-      }
-    }
+    // Use the weightedRandomSelect utility to select an option
+    LearningItemType? selectedType = options.isNotEmpty
+        ? weightedRandomSelect(options, weights, random: random)
+        : null;
 
     // Create a new item based on the selected type
     LearningItem? newItem;
@@ -206,44 +225,80 @@ class LearningSessionCubit extends Cubit<LearningSessionState> {
     if (selectedType == LearningItemType.learning && nextLearningWord != null) {
       newItem = LearningItem(
         id: nextLearningWord.id,
-        word: nextLearningWord, // Fix: use content instead of id for word
+        word: nextLearningWord,
         flowId: state.currentFlowId,
         type: LearningItemType.learning,
       );
     } else if (selectedType == LearningItemType.testCurrentFlow) {
-      final word = currentFlowWords[random.nextInt(currentFlowWords.length)];
+      // Find word with the worst spaced repetition score (lowest key value indicates worse performance)
+      // but also allow some exploration of other words
+
+      // Create weights for selection based on SR scores (lower score = higher weight)
+      List<SREntry> eligibleWords = List.from(currentFlowWords);
+      List<double> selectionWeights = [];
+
+      // Check which words were recently shown in the itemList (last 10 items)
+      Set<String> recentlyShownWordIds = {};
+      int recentItemCount = min(10, state.itemList.length);
+      for (int i = state.itemList.length - 1;
+          i >= state.itemList.length - recentItemCount && i >= 0;
+          i--) {
+        recentlyShownWordIds.add(state.itemList[i].id);
+      }
+
+      for (var wordEntry in eligibleWords) {
+        double weight = wordEntry.key;
+
+        // Boost weight for words with very low scores (needs more practice)
+        if (wordEntry.key < 2.0) {
+          weight *= 1.5;
+        }
+
+        // Reduce weight if word was never shown prevoislu
+        if (!recentlyShownWordIds.contains(wordEntry.value.id)) {
+          weight *= 0.5;
+        }
+
+        // Ensure weight is positive
+        selectionWeights.add(max(0.1, weight));
+      }
+
+      // Select word based on weighted probability
+      final selectedWordEntry =
+          weightedRandomSelect(eligibleWords, selectionWeights, random: random);
+
       newItem = LearningItem(
-        id: word.id,
-        word: word,
+        id: selectedWordEntry.value.id,
+        word: selectedWordEntry.value,
         flowId: state.currentFlowId,
         type: LearningItemType.testCurrentFlow,
       );
     } else if (selectedType == LearningItemType.testOtherFlow) {
       final word = otherFlowWords[random.nextInt(otherFlowWords.length)];
       newItem = LearningItem(
-        id: word.id,
-        word: word,
-        flowId: word.flowId,
+        id: word.value.id,
+        word: word.value,
+        flowId: word.value.flowId,
         type: LearningItemType.testOtherFlow,
       );
     } else if (selectedType == LearningItemType.feedbackCurrentFlow) {
       final testId =
           currentFlowFailedTests[random.nextInt(currentFlowFailedTests.length)];
-      final word = currentFlowWords.firstWhere((w) => w.id == testId);
+      final word = currentFlowWords.firstWhere((w) => w.value.id == testId);
       newItem = LearningItem(
-        id: word.id,
-        word: word,
+        id: word.value.id,
+        word: word.value,
         flowId: state.currentFlowId,
         type: LearningItemType.feedbackCurrentFlow,
       );
     } else if (selectedType == LearningItemType.feedbackOtherFlow) {
       final testId =
           otherFlowFailedTests[random.nextInt(otherFlowFailedTests.length)];
-      final word = otherFlowWords.firstWhere((w) => w.id == testId);
+      final word = otherFlowWords.firstWhere((w) => w.value.id == testId);
       newItem = LearningItem(
-        id: word.id,
-        word: word,
-        flowId: word.flowId,
+        id: word.value.id,
+        word: word.value,
+        flowId: word.value.flowId,
         type: LearningItemType.feedbackOtherFlow,
       );
     }

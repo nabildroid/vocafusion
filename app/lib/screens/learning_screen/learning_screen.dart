@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:vocafusion/cubits/content_cubit.dart';
 import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
 import 'package:vocafusion/cubits/streak_cubit.dart';
@@ -41,6 +42,7 @@ class _LearningScreenState extends State<LearningScreen> {
     itemPositionsListener.itemPositions
         .addListener(listenToItemPositionChanges);
 
+    context.read<ContentCubit>().sync(context);
     reactToStateChanges(context.read<LearningSessionCubit>().state);
   }
 
@@ -84,6 +86,8 @@ class _LearningScreenState extends State<LearningScreen> {
   }
 
   void next() async {
+    await context.read<LearningSessionCubit>().processData();
+
     pointer = pointer + 1;
     setState(() {});
 
@@ -107,7 +111,7 @@ class _LearningScreenState extends State<LearningScreen> {
 
   void reactToStateChanges(LearningSessionState state) {
     setState(() {
-      forLearning = state.words;
+      forLearning = state.words.map((e) => e.value).toList();
       pointer = 1;
     });
   }
@@ -123,7 +127,7 @@ class _LearningScreenState extends State<LearningScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: BlocListener<LearningSessionCubit, LearningSessionState>(
                 listenWhen: (p, c) {
-                  return !listEquals(p.words, c.words);
+                  return p.words.length != c.words.length;
                 },
                 listener: (context, state) => reactToStateChanges(state),
                 child: LayoutBuilder(builder: (context, c) {
@@ -164,6 +168,7 @@ class _LearningScreenState extends State<LearningScreen> {
                                 padding: const EdgeInsets.only(bottom: 20),
                                 child: QuizWidget(
                                   item: item.word,
+                                  onCorrectAnswer: next,
                                 ),
                               );
                             case LearningItemType.learning:
@@ -189,7 +194,6 @@ class _LearningScreenState extends State<LearningScreen> {
               )),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
-              await context.read<LearningSessionCubit>().processData();
               next();
             },
             child: Text("Next"),
