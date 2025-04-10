@@ -155,11 +155,11 @@ class LearningSessionCubit extends HydratedCubit<LearningSessionState> {
     }
 
     // Define the weights
-    const double learningWeight = 1;
-    const double testCurrentFlowWeight = 0.4;
-    const double testOtherFlowWeight = 0.3;
-    const double feedbackCurrentFlowWeight = 0.2;
-    const double feedbackOtherFlowWeight = 0.3;
+    const double learningWeight = 0.7;
+    const double testCurrentFlowWeight = 0.2;
+    const double testOtherFlowWeight = 0.1;
+    const double feedbackCurrentFlowWeight = .3;
+    const double feedbackOtherFlowWeight = .4;
 
     // Create options and weights lists for weighted selection
     List<LearningItemType> options = [];
@@ -250,11 +250,11 @@ class LearningSessionCubit extends HydratedCubit<LearningSessionState> {
         double weight = wordEntry.key;
 
         // Boost weight for words with very low scores (needs more practice)
-        if (wordEntry.key < 2.0) {
-          weight *= 1.5;
+        if (wordEntry.key < 0.1) {
+          weight *= 5;
         }
 
-        // Reduce weight if word was never shown prevoislu
+        // Reduce weight if word was never shown prevoisly
         if (!recentlyShownWordIds.contains(wordEntry.value.id)) {
           weight *= 0.5;
         }
@@ -320,6 +320,14 @@ class LearningSessionCubit extends HydratedCubit<LearningSessionState> {
     if (!state.failedTests.contains(testId)) {
       final updatedFailedTests = List<String>.from(state.failedTests)
         ..add(testId);
+      emit(state.copyWith(failedTests: updatedFailedTests));
+    }
+  }
+
+  void removeFailedTest(String testId) {
+    if (state.failedTests.contains(testId)) {
+      final updatedFailedTests = List<String>.from(state.failedTests)
+        ..remove(testId);
       emit(state.copyWith(failedTests: updatedFailedTests));
     }
   }

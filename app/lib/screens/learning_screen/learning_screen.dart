@@ -11,6 +11,7 @@ import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
 import 'package:vocafusion/cubits/streak_cubit.dart';
 import 'package:vocafusion/models/modeling.dart';
+import 'package:vocafusion/screens/learning_screen/widgets/flashback_widgets.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/quiz_widget.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/widgets.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/word_card.dart';
@@ -105,6 +106,9 @@ class _LearningScreenState extends State<LearningScreen> {
       curve: Curves.easeIn,
       // opacityAnimationWeights: [20, 30, 100],
     );
+
+    context.read<StreakCubit>().incrementCardCount();
+    context.read<StreakCubit>().showCongratsIfNeeded(context);
   }
 
   List<WordCard> forLearning = [];
@@ -163,6 +167,14 @@ class _LearningScreenState extends State<LearningScreen> {
 
                           // Switch based on item type
                           switch (item.type) {
+                            case LearningItemType.testOtherFlow:
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: QuizWidget(
+                                  item: item.word,
+                                  onCorrectAnswer: next,
+                                ),
+                              );
                             case LearningItemType.testCurrentFlow:
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 20),
@@ -178,10 +190,17 @@ class _LearningScreenState extends State<LearningScreen> {
                                   item: item.word,
                                 ),
                               );
-                            default:
+                            case LearningItemType.feedbackCurrentFlow:
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 20),
-                                child: QuizWidget(
+                                child: FlashbackWidget(
+                                  item: item.word,
+                                ),
+                              );
+                            case LearningItemType.feedbackOtherFlow:
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: FlashbackWidget(
                                   item: item.word,
                                 ),
                               );
@@ -319,10 +338,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       actions: [
         IconButton.filledTonal(
-          onPressed: () {
-            context.read<StreakCubit>().incrementCardCount();
-            context.read<StreakCubit>().showCongratsIfNeeded(context);
-          },
+          onPressed: () {},
           icon: Icon(Icons.diamond_outlined),
         ),
         SizedBox(width: 8),

@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vocafusion/cubits/content_cubit.dart';
+import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
 import 'package:vocafusion/models/modeling.dart';
 
@@ -21,7 +23,8 @@ class QuizWidget extends StatefulWidget {
 
 class _QuizWidgetState extends State<QuizWidget> {
   bool isCorrect = false;
-  bool hasAttempted = false;
+  int attempt = 0;
+  bool showFeedback = false;
   List<String> options = [];
   List<int> hiddenWordIndices = [];
 
@@ -37,15 +40,15 @@ class _QuizWidgetState extends State<QuizWidget> {
   List<String> _generateOptions() {
     // In a real app, you would generate distractors based on the word
     // Here we're creating some mock options
+    final words = List<WordCard>.from(context.read<ContentCubit>().state.words);
+    words.shuffle();
     List<String> wordOptions = [
       widget.item.word,
-      // Add 3 fake options - in a real app these would be better distractors
-      'option1',
-      'option2',
-      'option3',
+      ...words.sublist(0, 3).map((e) => e.word),
     ];
+
     // Shuffle the options
-    wordOptions.shuffle();
+    // wordOptions.shuffle();
     return wordOptions;
   }
 
@@ -168,31 +171,41 @@ class _QuizWidgetState extends State<QuizWidget> {
                 );
               },
               onAcceptWithDetails: (ctx) {
-                context.read<SrCubit>().recordQuizAnswer(
-                      widget.item,
-                      isCorrect,
-                      secondTry: hasAttempted,
-                    );
-                setState(() {
-                  hasAttempted = true;
-                  isCorrect = true;
-                  if (ctx.data == widget.item.word) {
-                    Future.delayed(Duration(seconds: 1), () {
-                      widget.onCorrectAnswer?.call();
-                    });
-                  }
+                context.read<SrCubit>().recordQuizAnswer(widget.item, true,
+                    secondTry: attempt != 0);
+                isCorrect = true;
+                setState(() {});
+
+                Future.delayed(Duration(seconds: 2), () {
+                  widget.onCorrectAnswer?.call();
                 });
+
+                if (attempt < 2) {
+                  context
+                      .read<LearningSessionCubit>()
+                      .removeFailedTest(widget.item.id);
+                }
               },
               onWillAcceptWithDetails: (ctx) {
+                setState(() {
+                  showFeedback = true;
+                });
+
                 return ctx.data == widget.item.word;
               },
               onLeave: (data) {
                 context.read<SrCubit>().recordQuizAnswer(widget.item, false);
 
-                setState(() {
-                  hasAttempted = true;
-                  isCorrect = false;
-                });
+                attempt++;
+                isCorrect = false;
+                setState(() {});
+
+                if (attempt == 2) {
+                  // todo, as like this widget not interacting directly with the learningSessionCubit, you should not do the bellow either
+                  context
+                      .read<LearningSessionCubit>()
+                      .registerFailedTest(widget.item.id);
+                }
               },
             ),
           ),
@@ -200,7 +213,7 @@ class _QuizWidgetState extends State<QuizWidget> {
           SizedBox(height: 24),
 
           // Show feedback if attempted
-          if (hasAttempted)
+          if (showFeedback)
             Container(
               padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
               decoration: BoxDecoration(
