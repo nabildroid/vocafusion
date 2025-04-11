@@ -1,12 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vocafusion/cubits/content_cubit.dart';
+import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
+import 'package:vocafusion/models/modeling.dart';
 
-class FlowBraning extends StatelessWidget {
-  const FlowBraning({
+class FlowBranching extends StatelessWidget {
+  final VoidCallback onFlowSelected;
+  const FlowBranching({
     super.key,
+    required this.onFlowSelected,
   });
 
   @override
   Widget build(BuildContext context) {
+    final flows =
+        List<WordsFlow>.from(context.read<ContentCubit>().state.flows);
+    final currentFlow =
+        context.read<LearningSessionCubit>().state.currentFlowId;
+
+    flows.shuffle();
+
+    final branches = flows.where((e) => e.parentFlow == currentFlow).toList();
+    // final branches = flows.sublist(0, 3);
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
@@ -48,12 +64,12 @@ class FlowBraning extends StatelessWidget {
             ),
             SizedBox(height: 8),
             TreeDiagramWidget(
-              options: [
-                "I know this word well",
-                "I'm still learning this",
-                "I need to review it again"
-              ],
-              onOptionSelected: (index) {},
+              options: branches.map((e) => e.title).toList(),
+              onOptionSelected: (index) {
+                final flow = branches[index];
+                context.read<LearningSessionCubit>().setCurrentFlowId(flow.id);
+                onFlowSelected();
+              },
             ),
           ],
         ),

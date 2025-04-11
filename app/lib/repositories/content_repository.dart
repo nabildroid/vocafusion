@@ -43,6 +43,7 @@ class ContentRepository extends AuthorizedDio {
               targetLanguage: "FR",
               nativeLanguage: "EN",
               level: 1,
+              parentFlow: e["parentId"],
               title: e["title"],
             ))
         .toList();

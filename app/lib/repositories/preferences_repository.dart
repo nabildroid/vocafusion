@@ -34,7 +34,7 @@ class PreferenceRepository {
 }
 
 extension PreferenceExtension on PreferenceRepository {
-  static const globalPrefix = "3";
+  static const globalPrefix = "7";
 
   Future<bool?> getBool(String key) async {
     final prefs = await _prefs;

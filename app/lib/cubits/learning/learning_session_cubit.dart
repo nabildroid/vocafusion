@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:math';
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
@@ -33,32 +34,41 @@ class LearningItem {
 }
 
 // Learning session state
-class LearningSessionState {
+class LearningSessionState extends Equatable {
   final List<LearningItem> itemList; // Changed from Queue to List
   final String currentFlowId;
   final List<String> failedTests;
   final List<SREntry> words; // Add words from SrCubit
+
+  final bool? needBranching;
 
   const LearningSessionState({
     required this.itemList, // Changed from itemQueue to itemList
     required this.currentFlowId,
     required this.failedTests,
     required this.words,
+    this.needBranching,
   });
 
   LearningSessionState copyWith({
-    List<LearningItem>? itemList, // Changed from itemQueue to itemList
+    List<LearningItem>? itemList,
     String? currentFlowId,
     List<String>? failedTests,
     List<SREntry>? words,
+    bool? needBranching,
   }) {
     return LearningSessionState(
-      itemList: itemList ?? this.itemList, // Changed from itemQueue to itemList
+      itemList: itemList ?? this.itemList,
       currentFlowId: currentFlowId ?? this.currentFlowId,
       failedTests: failedTests ?? this.failedTests,
       words: words ?? this.words,
+      needBranching: needBranching ?? this.needBranching,
     );
   }
+
+  @override
+  List<Object?> get props =>
+      [itemList, currentFlowId, failedTests, words, needBranching];
 }
 
 // Learning session cubit
@@ -111,10 +121,11 @@ class LearningSessionCubit extends HydratedCubit<LearningSessionState> {
     }
   }
 
-  Future<void> processData() async {
+  Future<bool?> processData() async {
     if (state.currentFlowId.isEmpty || state.words.isEmpty) {
-      return;
+      return null;
     }
+    emit(state.copyWith(needBranching: false));
 
     final random = Random();
 
@@ -137,7 +148,8 @@ class LearningSessionCubit extends HydratedCubit<LearningSessionState> {
     // Get the last learning item to determine the next word in order
     LearningItem? lastLearningItem;
     for (final item in state.itemList.reversed) {
-      if (item.type == LearningItemType.learning) {
+      if (item.type == LearningItemType.learning &&
+          item.flowId == state.currentFlowId) {
         lastLearningItem = item;
         break;
       }
@@ -147,8 +159,9 @@ class LearningSessionCubit extends HydratedCubit<LearningSessionState> {
     WordCard? nextLearningWord;
     if (lastLearningItem != null) {
       nextLearningWord = currentFlowWords
-          .firstWhere((e) => e.value.previousCard == lastLearningItem!.word.id)
-          .value;
+          .where((e) => e.value.previousCard == lastLearningItem!.word.id)
+          .firstOrNull
+          ?.value;
     } else if (currentFlowWords.isNotEmpty) {
       // If no learning word in queue, start from the beginning
       nextLearningWord = currentFlowWords[0].value;
@@ -166,10 +179,8 @@ class LearningSessionCubit extends HydratedCubit<LearningSessionState> {
     List<double> weights = [];
 
     // Always add learning option if there's a next learning word
-    if (nextLearningWord != null) {
-      options.add(LearningItemType.learning);
-      weights.add(learningWeight);
-    }
+    options.add(LearningItemType.learning);
+    weights.add(state.itemList.isEmpty ? 1111 : learningWeight);
 
     // Add currentFlow test options
     if (currentFlowWords.isNotEmpty) {
@@ -222,13 +233,32 @@ class LearningSessionCubit extends HydratedCubit<LearningSessionState> {
     // Create a new item based on the selected type
     LearningItem? newItem;
 
-    if (selectedType == LearningItemType.learning && nextLearningWord != null) {
-      newItem = LearningItem(
-        id: nextLearningWord.id,
-        word: nextLearningWord,
-        flowId: state.currentFlowId,
-        type: LearningItemType.learning,
-      );
+    if (selectedType == LearningItemType.learning) {
+      if (nextLearningWord != null) {
+        newItem = LearningItem(
+          id: nextLearningWord.id,
+          word: nextLearningWord,
+          flowId: state.currentFlowId,
+          type: LearningItemType.learning,
+        );
+      } else {
+        // check if we need to branch our or resync
+        final someWordNeedAttention =
+            currentFlowWords.where((e) => e.key < 0.2).firstOrNull;
+        if (someWordNeedAttention != null && random.nextInt(10) < 8) {
+          newItem = LearningItem(
+            id: someWordNeedAttention.value.id,
+            word: someWordNeedAttention.value,
+            flowId: state.currentFlowId,
+            type: LearningItemType.learning,
+          );
+        } else {
+          // branch out
+          emit(state.copyWith(needBranching: true));
+
+          return false;
+        }
+      }
     } else if (selectedType == LearningItemType.testCurrentFlow) {
       // Find word with the worst spaced repetition score (lowest key value indicates worse performance)
       // but also allow some exploration of other words

@@ -223,6 +223,17 @@ class _LearningScreenState extends State<LearningScreen> {
             },
           ),
         ),
+        BlocBuilder<LearningSessionCubit, LearningSessionState>(
+          buildWhen: (p, c) {
+            return p.needBranching != c.needBranching;
+          },
+          builder: (context, state) {
+            if (state.needBranching != true) return SizedBox.shrink();
+            return FlowBranching(
+              onFlowSelected: next,
+            );
+          },
+        ),
       ],
     );
   }
