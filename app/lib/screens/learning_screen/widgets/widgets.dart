@@ -25,7 +25,7 @@ class AnimToFillViewForScrolling extends StatefulWidget {
 }
 
 class _AnimToFillViewState extends State<AnimToFillViewForScrolling> {
-  final h = ValueNotifier(10000.0);
+  final h = ValueNotifier(1000.0);
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +37,7 @@ class _AnimToFillViewState extends State<AnimToFillViewForScrolling> {
         child: Column(
           children: [
             IntrinsicDimension(listener: (_, __, height, a) {
-              print(a);
+              print(height);
 
               h.value = height;
             }, builder: (context, _, __, ___) {
@@ -142,7 +142,7 @@ class TextWithTextHighlited extends StatelessWidget {
       text: TextSpan(
         style: TextStyle(
           fontSize: fontSize,
-          color: Colors.black,
+          color: Color(0xff1B1B1B),
           fontWeight: FontWeight.bold,
         ),
         children: finalSpans,

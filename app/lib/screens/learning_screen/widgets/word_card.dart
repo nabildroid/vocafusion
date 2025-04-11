@@ -56,58 +56,50 @@ class _CardWidgetState extends State<CardWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        gradient: LinearGradient(
+          colors: [
+            Color(0xffFFF3EB),
+            Color(0xffDBE5FF),
+          ],
+          stops: const [0.18, 1],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.all(Radius.elliptical(13, 20)),
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
-            offset: Offset(0, 2),
-            blurRadius: 2,
+            offset: Offset(0, 0),
+            blurRadius: 5,
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       width: double.infinity,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              IconButton.filledTonal(
-                icon: Icon(
-                  isLoading
-                      ? Icons.hourglass_empty
-                      : isFavorite
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                  color: isFavorite ? Colors.red : null,
-                ),
-                onPressed: isLoading ? null : _toggleFavorite,
-                iconSize: 21,
+          Center(
+            child: Text(
+              '"${widget.item.word}"',
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.bold,
+                color: Color(0xffE30004),
               ),
-              Spacer(),
-              Text(
-                widget.item.word,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xffFF0307),
-                ),
-              ),
-              Spacer(),
-              Spacer(),
-            ],
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             widget.item.targetDefinition,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontStyle: FontStyle.italic,
-              color: Colors.grey,
+              color: Colors.grey.shade600,
             ),
           ),
           const SizedBox(height: 20),
@@ -117,28 +109,60 @@ class _CardWidgetState extends State<CardWidget> {
           const SizedBox(height: 20),
           Row(
             children: [
-              IconButton.filledTonal(
-                icon: Icon(Icons.mic),
-                onPressed: () {},
+              WordActionButton(
+                icon: Icons.favorite_border,
+                onPress: () {},
+              ),
+              Spacer(),
+              WordActionButton(
+                icon: Icons.mic,
+                onPress: () {},
               ),
               const SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade500,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton.filledTonal(
-                icon: Icon(Icons.play_arrow),
-                onPressed: () {},
+              WordActionButton(
+                icon: Icons.play_arrow,
+                onPress: () {},
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class WordActionButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPress;
+  const WordActionButton({
+    super.key,
+    required this.icon,
+    required this.onPress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white70,
+      shadowColor: Colors.black26,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.elliptical(7, 10)),
+        side: BorderSide(
+          color: Colors.grey.shade300,
+          width: 1,
+        ),
+      ),
+      elevation: 6,
+      child: InkWell(
+        onTap: onPress,
+        borderRadius: BorderRadius.all(Radius.elliptical(7, 10)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Icon(
+            icon,
+            color: Colors.black,
+          ),
+        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:vocafusion/screens/learning_screen/learning_screen.dart';
 
 class StreakCongratsSheet extends StatelessWidget {
   final int currentStreak;
@@ -16,7 +17,7 @@ class StreakCongratsSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Color(0xffF6F3F0),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(25),
           topRight: Radius.circular(25),
@@ -41,44 +42,44 @@ class StreakCongratsSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
           ),
-          const Icon(
-            Icons.local_fire_department,
-            color: Colors.deepOrange,
-            size: 60,
+          Center(
+            child: Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.blueGrey,
+                  width: 4,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                currentStreak.toString(),
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueGrey,
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 20),
           Text(
-            'Congratulations!',
+            'Continue your Streak!',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
           ),
           const SizedBox(height: 10),
-          Text(
-            'You\'ve completed your daily goal of 20 cards!',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Current streak: $currentStreak ${currentStreak == 1 ? 'day' : 'days'}',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
           const SizedBox(height: 30),
           if (milestones.isNotEmpty) _buildTimelineView(context),
           const SizedBox(height: 30),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-            ),
-            child: const Text('Keep Learning'),
-          ),
+          FloatingCheckingButton(
+              checkIfVisible: () {
+                return true;
+              },
+              onPressed: () async {},
+              label: "I'll practice Now!"),
           const SizedBox(height: 20),
         ],
       ),
@@ -86,67 +87,153 @@ class StreakCongratsSheet extends StatelessWidget {
   }
 
   Widget _buildTimelineView(BuildContext context) {
-    final displayedMilestones = milestones.take(5).toList();
+    // Define the streak milestones
+    final List<int> streakMilestones = [3, 5, 10, 20, 30, 45, 60, 90, 120];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16.0, bottom: 12.0),
-          child: Text(
-            'Your Progress',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+    // Find the next milestone to achieve
+    int nextMilestone = streakMilestones.firstWhere(
+        (milestone) => milestone > currentStreak,
+        orElse: () => streakMilestones.last);
+
+    // Find the previous milestone (to show progress between two points)
+    int previousMilestone = currentStreak;
+    for (int i = streakMilestones.length - 1; i >= 0; i--) {
+      if (streakMilestones[i] < currentStreak) {
+        previousMilestone = streakMilestones[i];
+        break;
+      }
+    }
+    if (previousMilestone == currentStreak &&
+        streakMilestones.first > currentStreak) {
+      previousMilestone = 0;
+    }
+
+    // Calculate progress between current milestones
+    double progressValue = (currentStreak - previousMilestone) /
+        (nextMilestone - previousMilestone);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(0xffF9F7F5),
+        border: Border.all(
+          color: Colors.white,
+          width: 3,
         ),
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: displayedMilestones.length,
-            itemBuilder: (context, index) {
-              final milestone = displayedMilestones[index];
-              final isLast = index == displayedMilestones.length - 1;
-
-              // Calculate day number for this milestone
-              int dayNumber = 0;
-              if (index == 0) {
-                dayNumber = 1;
-              } else if (index == 1) {
-                dayNumber = 3;
-              } else if (index == 2) {
-                dayNumber = 7;
-              } else if (index == 3) {
-                dayNumber = 10;
-              } else {
-                dayNumber = 14;
-              }
-
-              // If this is today and we have the current streak
-              if (index == displayedMilestones.length - 1 &&
-                  _isToday(milestone)) {
-                dayNumber = currentStreak;
-              }
-
-              return Row(
-                children: [
-                  _buildTimelineItem(
-                    context,
-                    DateFormat('MMM d').format(milestone),
-                    dayNumber.toString(),
-                    isLast,
+        borderRadius: const BorderRadius.all(
+          Radius.circular(20),
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Text(
+              '$nextMilestone-day streak challenge',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Progress bar
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: LinearProgressIndicator(
+                    value: progressValue,
+                    backgroundColor: Colors.grey[200],
+                    color: Theme.of(context).colorScheme.primary,
+                    minHeight: 10,
+                    borderRadius: BorderRadius.circular(5),
                   ),
-                  if (!isLast)
-                    Container(
-                      width: 30,
-                      height: 2,
-                      color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+
+              // Previous milestone marker
+              Positioned(
+                left: 20,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 3,
                     ),
-                ],
-              );
-            },
-          ),
-        ),
-      ],
+                  ),
+                  padding: const EdgeInsets.all(5),
+                  child: Center(
+                      child: Text(
+                    previousMilestone.toString(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff2F3A4B),
+                    ),
+                  )),
+                ),
+              ),
+
+              // Next milestone marker
+              Positioned(
+                right: 20,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 3,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(5),
+                  child: Center(
+                      child: Text(
+                    nextMilestone.toString(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff2F3A4B),
+                    ),
+                  )),
+                ),
+              ),
+
+              // Current streak marker
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 3,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(5),
+                  child: Center(
+                      child: Text(
+                    currentStreak.toString(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  )),
+                ),
+              )
+            ],
+          )
+        ],
+      ),
     );
   }
 

@@ -143,7 +143,7 @@ class MyApp extends StatelessWidget {
         title: 'VocaFusion',
         locale: const Locale('en'),
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
           textTheme: GoogleFonts.vazirmatnTextTheme(),
           useMaterial3: true,
         ),
