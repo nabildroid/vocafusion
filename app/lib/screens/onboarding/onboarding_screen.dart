@@ -1,17 +1,643 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/onboarding_cubit.dart';
 
+class AdsScreen extends StatefulWidget {
+  const AdsScreen({super.key});
+
+  @override
+  State<AdsScreen> createState() => _AdsScreenState();
+}
+
+class _AdsScreenState extends State<AdsScreen> {
+  final cards = [
+    [
+      "Learning new Words is easy, Actually",
+      "this is proven technique to learn new words in real life context",
+      "https://github.com/nabildroid.png"
+    ],
+    [
+      "2Learning new Words is easy, Actually",
+      "this is proven technique to learn new words in real life context",
+      "https://github.com/next1.png"
+    ],
+  ];
+
+  int page = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Align(
+            alignment: Alignment.topCenter,
+            child: FractionallySizedBox(
+              heightFactor: .45,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.blueGrey,
+                  image: DecorationImage(
+                    image: NetworkImage(cards[page][2]),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: FractionallySizedBox(
+              heightFactor: .6,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                ),
+                child: Column(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: PageView(
+                        onPageChanged: (i) => setState(() {
+                          page = i;
+                        }),
+                        children: cards
+                            .map(
+                              (card) => Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(height: 20),
+                                  Text(
+                                    card[0],
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  SizedBox(height: 20),
+                                  Text(
+                                    card[1],
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        child: Row(
+                            spacing: 10,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: cards
+                                .map((e) => CircleAvatar(
+                                      radius: 5,
+                                      backgroundColor: page == cards.indexOf(e)
+                                          ? Colors.black
+                                          : Colors.grey,
+                                    ))
+                                .toList()),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          )
+        ],
+      ),
+      persistentFooterButtons: [
+        InteractiveOkButton(
+          tag: "continue",
+          text: "Next",
+          onPressed: () => Navigator.of(context).push(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  OnboardingScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                var begin = Offset(1.0, 0.0); // Start from right
+                var end = Offset.zero;
+                var curve = Curves.easeInOut;
+                var tween = Tween(begin: begin, end: end)
+                    .chain(CurveTween(curve: curve));
+
+                return SlideTransition(
+                  position: animation.drive(tween),
+                  child: child,
+                );
+              },
+              transitionDuration: Duration(milliseconds: 300),
+            ),
+          ),
+        )
+      ],
+    );
+  }
+}
+
+class InteractiveOkButton extends StatelessWidget {
+  final String? tag;
+  final Color color;
+  final Color textColor;
+  final Color borderColor;
+  final String text;
+  final VoidCallback? onPressed;
+  final bool disabled;
+
+  const InteractiveOkButton({
+    super.key,
+    this.color = const Color(0xff2D2C2D),
+    this.textColor = Colors.white,
+    this.borderColor = Colors.black,
+    this.text = "Continue",
+    this.onPressed,
+    this.disabled = false,
+    this.tag,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FractionallySizedBox(
+      widthFactor: 1,
+      child: Opacity(
+        opacity: disabled ? 0.5 : 1,
+        child: IgnorePointer(
+          ignoring: disabled,
+          child: Hero(
+            tag: tag ?? Random().nextDouble().toString(),
+            child: FilledButton(
+              onPressed: onPressed,
+              style: FilledButton.styleFrom(
+                backgroundColor: color,
+                //only bottom border
+
+                foregroundBuilder: (ctx, state, child) => Padding(
+                  padding: EdgeInsets.only(
+                      top: state.contains(WidgetState.pressed) ? 3 : 0),
+                  child: child,
+                ),
+
+                backgroundBuilder: (ctx, state, child) => Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border(
+                      bottom: BorderSide(
+                        color: borderColor,
+                        width: state.contains(WidgetState.pressed) ? 0 : 3,
+                      ),
+                    ).add(Border.all(
+                      color: borderColor,
+                      width: 1,
+                    )),
+                  ),
+                  child: child,
+                ),
+              ),
+              child: Text(
+                text,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
+  final controller = PageController();
+
+  void next() {
+    if (controller.page == 8) {
+      context.push("/register");
+      return;
+    } else {
+      controller.nextPage(
+        duration: Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+    }
+
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          centerTitle: true,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_rounded),
+            onPressed: () {
+              if (controller.page == 0) {
+                context.pop();
+                return;
+              }
+              controller.previousPage(
+                duration: Duration(milliseconds: 350),
+                curve: Curves.easeInOut,
+              );
+
+              setState(() {});
+            },
+          ),
+          title: FractionallySizedBox(
+            widthFactor: 0.9,
+            child: Center(
+              child: Builder(builder: (context) {
+                final progress = ((controller.page ?? 0) + 1) / 7;
+                return LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Colors.grey.shade300,
+                  color: const Color.fromARGB(255, 110, 102, 187),
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(100),
+                );
+              }),
+            ),
+          ),
+        ),
+        body: SizedBox.expand(
+          child: PageView(
+            controller: controller,
+            physics: NeverScrollableScrollPhysics(),
+            scrollDirection: Axis.horizontal,
+            children: [
+              TargetLanguageChooser(),
+              NativeLanguageChooser(),
+              GenderChooser(),
+              AgeGroupSelector(),
+            ],
+          ),
+        ),
+        persistentFooterButtons: [
+          BlocListener<OnboardingCubit, OnboardingState>(
+            listener: (context, state) {},
+            child: AnimatedBuilder(
+                animation: controller,
+                builder: (context, _) {
+                  return BlocBuilder<OnboardingCubit, OnboardingState>(
+                      builder: (context, state) {
+                    bool allowControll = true;
+
+                    if (controller.page == 0) {
+                      allowControll = state.targetLanguage != null;
+                    } else if (controller.page == 1) {
+                      allowControll = state.nativeLanguage != null;
+                    } else if (controller.page == 2) {
+                      allowControll = state.gender != null;
+                    } else if (controller.page == 3) {
+                      allowControll = state.age != null;
+                    } else if (controller.page == 4) {
+                      allowControll = state.languageLevel != null;
+                    } else if (controller.page == 5) {
+                      allowControll = state.selectedTopic != null;
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                      child: InteractiveOkButton(
+                        text: "Next",
+                        tag: "continue",
+                        disabled: !allowControll,
+                        onPressed: next,
+                      ),
+                    );
+                  });
+                }),
+          ),
+        ]);
+  }
+}
+
+class TargetLanguageChooser extends StatefulWidget {
+  const TargetLanguageChooser({super.key});
+
+  @override
+  State<TargetLanguageChooser> createState() => _TargetLanguageChooserState();
+}
+
+class _TargetLanguageChooserState extends State<TargetLanguageChooser> {
+  final List<String> _languages = [
+    'English',
+    'Spanish',
+    'French',
+    'German',
+    'Italian',
+    'Portuguese',
+    'Russian',
+    'Japanese',
+    'Turkish',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Choose Target Language",
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  )),
+          SizedBox(height: 16),
+          Text(
+              "This will be the language you are about to learn +1000 new words in",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.black87,
+                  )),
+          SizedBox(height: 20),
+          Expanded(
+            child: BlocBuilder<OnboardingCubit, OnboardingState>(
+                builder: (context, state) {
+              return ListView.builder(
+                itemCount: _languages.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: SelectableItem(
+                      isSelected: state.targetLanguage == _languages[index],
+                      onSelected: () {
+                        context
+                            .read<OnboardingCubit>()
+                            .setTargetLanguage(_languages[index]);
+                      },
+                      child: Center(child: Text(_languages[index])),
+                    ),
+                  );
+                },
+              );
+            }),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class AgeGroupSelector extends StatefulWidget {
+  const AgeGroupSelector({super.key});
+
+  @override
+  State<AgeGroupSelector> createState() => AgeGroupSelectorState();
+}
+
+class AgeGroupSelectorState extends State<AgeGroupSelector> {
+  final List<String> _ages = [
+    'Under 18',
+    '18-24',
+    '25-34',
+    '35-44',
+    '45-54',
+    '55+'
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Choose Your Age",
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  )),
+          SizedBox(height: 16),
+          Text(
+              "So we can Pick you the most interesting topics that keep you engage with with language",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.black87,
+                  )),
+          SizedBox(height: 20),
+          Expanded(
+            child: BlocBuilder<OnboardingCubit, OnboardingState>(
+                builder: (context, state) {
+              return ListView.builder(
+                itemCount: _ages.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: SelectableItem(
+                      isSelected: state.age == _ages[index],
+                      onSelected: () {
+                        context.read<OnboardingCubit>().setAge(_ages[index]);
+                      },
+                      child: Center(child: Text(_ages[index])),
+                    ),
+                  );
+                },
+              );
+            }),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class GenderChooser extends StatefulWidget {
+  const GenderChooser({super.key});
+
+  @override
+  State<GenderChooser> createState() => GenderChooserState();
+}
+
+class GenderChooserState extends State<GenderChooser> {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Choose Your Gender",
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  )),
+          SizedBox(height: 16),
+          Text(
+              "We will Select The most interesting Topics that provides better contexts for learning",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.black87,
+                  )),
+          SizedBox(height: 20),
+          Expanded(child: BlocBuilder<OnboardingCubit, OnboardingState>(
+              builder: (context, state) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: SelectableItem(
+                    isSelected: state.gender == "male",
+                    onSelected: () {
+                      context.read<OnboardingCubit>().setGender("male");
+                    },
+                    child: Center(child: Text("Male")),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: SelectableItem(
+                    isSelected: state.gender == "female",
+                    onSelected: () {
+                      context.read<OnboardingCubit>().setGender("female");
+                    },
+                    child: Center(child: Text("Female")),
+                  ),
+                )
+              ],
+            );
+          }))
+        ],
+      ),
+    );
+  }
+}
+
+class NativeLanguageChooser extends StatefulWidget {
+  const NativeLanguageChooser({super.key});
+
+  @override
+  State<NativeLanguageChooser> createState() => NativeLanguageChooserState();
+}
+
+class NativeLanguageChooserState extends State<NativeLanguageChooser> {
+  final List<String> _languages = [
+    'English',
+    'Spanish',
+    'French',
+    'German',
+    'Italian',
+    'Portuguese',
+    'Russian',
+    'Japanese',
+    'Turkish',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Choose Your Native Language",
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  )),
+          SizedBox(height: 16),
+          Text("the Language You master",
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.black87,
+                  )),
+          SizedBox(height: 20),
+          Expanded(
+            child: BlocBuilder<OnboardingCubit, OnboardingState>(
+                builder: (context, state) {
+              return ListView.builder(
+                itemCount: _languages.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: SelectableItem(
+                      isSelected: state.nativeLanguage == _languages[index],
+                      onSelected: () {
+                        context
+                            .read<OnboardingCubit>()
+                            .setNativeLanguage(_languages[index]);
+                      },
+                      child: Center(child: Text(_languages[index])),
+                    ),
+                  );
+                },
+              );
+            }),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class SelectableItem extends StatelessWidget {
+  final Widget child;
+  final bool isSelected;
+  final VoidCallback onSelected;
+  const SelectableItem({
+    super.key,
+    required this.child,
+    required this.isSelected,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isSelected ? Color(0xff2D2C2D) : Colors.grey.shade200,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onSelected,
+        child: DefaultTextStyle(
+          style: TextStyle(
+            color: isSelected ? Colors.white : Color(0xff2D2C2D),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class OnboardingScreen1 extends StatefulWidget {
+  const OnboardingScreen1({Key? key}) : super(key: key);
+
+  @override
+  State<OnboardingScreen1> createState() => _OnboardingScreen1State();
+}
+
+class _OnboardingScreen1State extends State<OnboardingScreen1> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
