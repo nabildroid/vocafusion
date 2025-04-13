@@ -170,13 +170,13 @@ class _LearningScreenState extends State<LearningScreen> {
                     builder: (context, fadeout, child) {
                       final opacity = pointer - 2 >= i && fadeout ? .0 : 1.0;
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 40),
-                        child: AnimToFillViewForScrolling(
-                          debug: false,
-                          opacity: opacity,
-                          maxHeight: c.maxHeight * minScreenFlashcard,
-                          isFilled: i != 0 && pointer - 1 == i,
+                      return AnimToFillViewForScrolling(
+                        debug: false,
+                        opacity: opacity,
+                        maxHeight: c.maxHeight * minScreenFlashcard,
+                        isFilled: i != 0 && pointer - 1 == i,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 40),
                           child: child!,
                         ),
                       );
