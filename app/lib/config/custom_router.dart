@@ -12,8 +12,7 @@ import 'package:vocafusion/repositories/user_repository.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:vocafusion/screens/fav_screen.dart';
 import 'package:vocafusion/screens/learning_screen/learning_screen.dart';
-import 'package:vocafusion/screens/onboarding/onboarding_screen.dart';
-import 'package:vocafusion/screens/register_screen.dart';
+import 'package:vocafusion/screens/onboarding_screen.dart';
 
 final GoRouter router = GoRouter(
   observers: [
@@ -37,7 +36,7 @@ final GoRouter router = GoRouter(
       return "/learn";
     }
   },
-  initialLocation: "/onboarding",
+  initialLocation: "/learn",
   routes: [
     GoRoute(
       path: "/learn",
@@ -70,10 +69,6 @@ final GoRouter router = GoRouter(
           ),
         ),
       ],
-    ),
-    GoRoute(
-      path: "/register",
-      builder: (context, state) => RegisterScreen(),
     ),
     GoRoute(
       path: "/onboarding",

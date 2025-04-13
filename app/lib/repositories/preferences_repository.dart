@@ -21,6 +21,20 @@ class PreferenceRepository {
     }
   }
 
+  Future<AccessTokenModel?> getAccessToken() async {
+    final data = await getString("accessToken");
+    if (data == null) return null;
+
+    return AccessTokenModel.fromJson(data);
+  }
+
+  Future<void> setAccessToken(AccessTokenModel accessToken) async {
+    await setString(
+      "accessToken",
+      accessToken.toJson(),
+    );
+  }
+
   Future<String> getUser() async {
     return (await getString("user")) ?? "";
   }

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "654306114416",
+    "project_id": "vocafusion-5f341",
+    "storage_bucket": "vocafusion-5f341.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:654306114416:android:9d9ae5b4ff22574eddedb5",
+        "android_client_info": {
+          "package_name": "me.laknabil.voca"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "654306114416-u6kniesas1nel0rlontnmq21j2ehskvc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "me.laknabil.voca",
+            "certificate_hash": "80d6940a1bec14dd3cf4d7a6a81b1640e9fcd0d8"
+          }
+        },
+        {
+          "client_id": "654306114416-tf56ck4r4t0pmf2sbglqs1v1muag75sf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_SCIrSaPRMHpHjmzNZknbit60CCgn_Xw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "654306114416-tf56ck4r4t0pmf2sbglqs1v1muag75sf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

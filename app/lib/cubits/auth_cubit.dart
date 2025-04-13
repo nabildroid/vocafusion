@@ -49,12 +49,12 @@ class AuthCubit extends Cubit<AuthState> {
       ));
     }
 
-    // _repo.currentUser.listen((user) {
-    //   emit(state.copyWith(
-    //     user: user,
-    //     status: user == null ? AuthStatus.out : null,
-    //   ));
-    // });
+    _repo.currentUser.listen((user) {
+      emit(state.copyWith(
+        user: user,
+        status: user == null ? AuthStatus.out : null,
+      ));
+    });
 
     unawaited(_repo.getUser(live: true));
   }

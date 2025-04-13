@@ -56,7 +56,7 @@ class DefaultFirebaseOptions {
     apiKey: 'AIzaSyCoDNWigrLQAm3vEQOsnwmgvt6G8RvIs0c',
     appId: '1:429661583504:android:058e79ee17f8a0e2d70015',
     messagingSenderId: '429661583504',
-    projectId: 'montahadi',
-    storageBucket: 'montahadi.firebasestorage.app',
+    projectId: 'vocafusion',
+    storageBucket: 'vocafusion.firebasestorage.app',
   );
 }

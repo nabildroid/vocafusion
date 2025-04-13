@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 
 abstract class AuthorizedDio {
   static const baseUrl = kReleaseMode
-      ? 'https://montahadi-content-1020195160641.europe-west3.run.app/'
+      ? 'https://vocafusion-content-1020195160641.europe-west3.run.app/'
       : "http://192.168.0.105:3000/";
   static final defaultHttp = Dio(BaseOptions(baseUrl: baseUrl));
 

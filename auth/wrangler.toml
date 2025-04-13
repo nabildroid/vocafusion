@@ -1,0 +1,47 @@
+name = "vocafusion-auth"
+main = "src/index.ts"
+compatibility_date = "2024-10-23"
+compatibility_flags = [ "nodejs_compat" ]
+
+# [vars]
+# MY_VAR = "my-variable"
+
+# [[kv_namespaces]]
+# binding = "MY_KV_NAMESPACE"
+# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# [[r2_buckets]]
+# binding = "MY_BUCKET"
+# bucket_name = "my-bucket"
+
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "vocafusion-auth"
+database_id = "65dbaf37-4291-41a4-ad00-e0dadb370c5d"
+migrations_dir = "./drizzle"
+
+# [ai]
+# binding = "AI"
+
+# [observability]
+# enabled = true
+# head_sampling_rate = 1
+
+
+[[unsafe.bindings]]
+name = "RATELIMIT_NEW_ACCOUNT"
+type = "ratelimit"
+# An identifier you define, that is unique to your Cloudflare account.
+# Must be an integer.
+namespace_id = "1003"
+
+# Limit: the number of tokens allowed within a given period in a single
+# Cloudflare location
+# Period: the duration of the period, in seconds. Must be either 10 or 60
+simple = { limit = 1, period = 60 }
+
+
+
+[observability]
+enabled = true
+head_sampling_rate = 1

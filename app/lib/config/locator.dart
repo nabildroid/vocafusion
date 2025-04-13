@@ -15,8 +15,8 @@ Future<void> setUpLocator({required Database sembastInstance}) async {
   locator.registerSingleton(sembastInstance);
 
   locator.registerSingleton(PreferenceRepository());
+  locator.registerSingleton(UserRepository()..getUser());
   locator.registerSingleton(ProgressRepository());
-  locator.registerSingleton(UserRepository());
   locator.registerSingleton(ContentRepository());
   locator.registerLazySingleton(() => FavoritesRepository());
 

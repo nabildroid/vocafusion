@@ -61,6 +61,7 @@ dependencies:
   intrinsic_dimension:
   jwt_decoder:
   firebase_core:
+  google_sign_in:
   firebase_app_check:
   pinput:
   flutter_inappwebview:

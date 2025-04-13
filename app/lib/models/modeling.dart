@@ -1,18 +1,57 @@
-class User {
+import 'package:equatable/equatable.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:vocafusion/models/core/access_token_model.dart';
+
+final class UserCustomClaims extends Equatable {
+  const UserCustomClaims({
+    required this.premiumExpires,
+  });
+
+  final DateTime premiumExpires;
+
+  bool get isPremium => DateTime.now().isBefore(premiumExpires);
+
+  bool get isTrulyPremium =>
+      premiumExpires.difference(DateTime.now()).inDays < 1000;
+
+  Map<String, dynamic> toJson() {
+    return {
+      "premiumExpires": isPremium ? premiumExpires.toIso8601String() : null,
+    };
+  }
+
+  factory UserCustomClaims.fromJson(Map<String, dynamic> data) {
+    var expiresAt = DateTime.now().add(Duration(days: 10000));
+    if (data["premiumExpires"] != null) {
+      expiresAt = DateTime.fromMillisecondsSinceEpoch(data["premiumExpires"]);
+    }
+    return UserCustomClaims(
+      premiumExpires: expiresAt,
+    );
+  }
+
+  @override
+  List<Object?> get props => [premiumExpires];
+}
+
+class User extends Equatable {
   final String uid;
+  final String email;
+  final String displayName;
+  final String? photoURL;
   final String nativeLanguage;
-  final String targetLanguage;
-  final int level;
+  final UserCustomClaims claims;
+
   final DateTime createdAt;
-  final bool isPremium;
 
   User({
     required this.uid,
     required this.nativeLanguage,
-    required this.targetLanguage,
-    required this.level,
     required this.createdAt,
-    required this.isPremium,
+    this.photoURL,
+    this.displayName = 'User',
+    required this.claims,
+    required this.email,
   });
 
   // from json
@@ -20,24 +59,22 @@ class User {
     return User(
       uid: json['uid'],
       nativeLanguage: json['nativeLanguage'],
-      targetLanguage: json['targetLanguage'],
-      level: json['level'],
       createdAt: DateTime.parse(json['createdAt']),
-      isPremium: json['isPremium'],
+      displayName: json['displayName'] ?? 'User',
+      photoURL: json['photoURL'],
+      claims: UserCustomClaims.fromJson(json['claims'] ?? {}),
+      email: json['email'] ?? '',
     );
   }
 
-  // to json
-  Map<String, dynamic> toJson() {
-    return {
-      'uid': uid,
-      'nativeLanguage': nativeLanguage,
-      'targetLanguage': targetLanguage,
-      'level': level,
-      'createdAt': createdAt.toIso8601String(),
-      'isPremium': isPremium,
-    };
+  factory User.fromAccessToken(AccessTokenModel accessToken) {
+    final token = accessToken.token;
+    final Map<String, dynamic> data = JwtDecoder.decode(token);
+    return User.fromJson(data);
   }
+
+  @override
+  List<Object?> get props => [uid, email, displayName, createdAt, claims];
 }
 
 class WordCard {

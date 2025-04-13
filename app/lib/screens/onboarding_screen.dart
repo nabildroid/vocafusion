@@ -3,8 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:vocafusion/config/locator.dart';
 import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/onboarding_cubit.dart';
+import 'package:vocafusion/repositories/user_repository.dart';
 
 class AdsScreen extends StatefulWidget {
   const AdsScreen({super.key});
@@ -121,29 +124,30 @@ class _AdsScreenState extends State<AdsScreen> {
       ),
       persistentFooterButtons: [
         InteractiveOkButton(
-          tag: "continue",
-          text: "Next",
-          onPressed: () => Navigator.of(context).push(
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  OnboardingScreen(),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                var begin = Offset(1.0, 0.0); // Start from right
-                var end = Offset.zero;
-                var curve = Curves.easeInOut;
-                var tween = Tween(begin: begin, end: end)
-                    .chain(CurveTween(curve: curve));
+            tag: "continue",
+            text: "Next",
+            onPressed: () async {
+              Navigator.of(context).push(
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      OnboardingScreen(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
+                    var begin = Offset(1.0, 0.0); // Start from right
+                    var end = Offset.zero;
+                    var curve = Curves.easeInOut;
+                    var tween = Tween(begin: begin, end: end)
+                        .chain(CurveTween(curve: curve));
 
-                return SlideTransition(
-                  position: animation.drive(tween),
-                  child: child,
-                );
-              },
-              transitionDuration: Duration(milliseconds: 300),
-            ),
-          ),
-        )
+                    return SlideTransition(
+                      position: animation.drive(tween),
+                      child: child,
+                    );
+                  },
+                  transitionDuration: Duration(milliseconds: 300),
+                ),
+              );
+            })
       ],
     );
   }
@@ -298,6 +302,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               AgeGroupSelector(),
               LevelChooser(),
               TopicChooser(),
+              CreateAccount(),
             ],
           ),
         ),
@@ -325,6 +330,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       allowControll = state.selectedTopic != null;
                     }
 
+                    if (controller.page == 6) return SizedBox.shrink();
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 28.0),
                       child: InteractiveOkButton(
@@ -338,6 +345,53 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 }),
           ),
         ]);
+  }
+}
+
+class CreateAccount extends StatelessWidget {
+  const CreateAccount({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          Text("Create Account",
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  )),
+          Spacer(),
+          SizedBox(height: 20),
+          Text(
+            "137 Language Learners sign in today",
+          ),
+          SizedBox(height: 4),
+          InteractiveOkButton(
+            tag: "continue",
+            onPressed: () async {
+              final nativeLangauge =
+                  context.read<OnboardingCubit>().state.nativeLanguage;
+
+              final user = await locator<UserRepository>()
+                  .loginWithGoogle(nativeLanguage: nativeLangauge);
+
+              print(user);
+            },
+            text: "Sign in with Google",
+          ),
+          SizedBox(height: 16),
+          TextButton(
+            child: Text(
+              "Skip",
+            ),
+            onPressed: () {},
+          ),
+          Spacer(),
+        ],
+      ),
+    );
   }
 }
 
@@ -551,6 +605,7 @@ class TopicChooserState extends State<TopicChooser> {
         isSelected: context.read<OnboardingCubit>().state.selectedTopic == id,
         onSelected: () {
           context.read<OnboardingCubit>().setSelectedTopic(id);
+          context.read<LearningSessionCubit>().setCurrentFlowId(id);
         },
         child: Row(
           mainAxisSize: MainAxisSize.min,

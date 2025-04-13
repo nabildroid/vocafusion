@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:vocafusion/cubits/auth_cubit.dart';
 import 'package:vocafusion/cubits/content_cubit.dart';
 import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
@@ -16,6 +17,7 @@ import 'package:vocafusion/screens/learning_screen/widgets/flashback_widgets.dar
 import 'package:vocafusion/screens/learning_screen/widgets/quiz_widget.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/widgets.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/word_card.dart';
+import 'package:vocafusion/screens/premium_screen.dart';
 import 'package:vocafusion/utils/utils.dart';
 
 class LearningScreen extends StatefulWidget {
@@ -532,13 +534,25 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        IconButton.filled(
-          style: IconButton.styleFrom(
-            backgroundColor: Colors.grey.shade200,
-          ),
-          onPressed: () {},
-          icon: Icon(Icons.diamond_outlined),
-        ),
+        Builder(builder: (context) {
+          final isPro =
+              context.watch<AuthCubit>().state.user?.claims.isTrulyPremium ==
+                  true;
+          return IconButton.filled(
+            style: IconButton.styleFrom(
+              backgroundColor:
+                  isPro ? Theme.of(context).primaryColor : Colors.grey.shade200,
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => PremiumScreen(),
+                ),
+              );
+            },
+            icon: Icon(Icons.diamond_outlined),
+          );
+        }),
         SizedBox(width: 8),
       ],
     );
