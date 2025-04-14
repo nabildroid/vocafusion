@@ -29,8 +29,13 @@ async function getPeriodicallyCachedPricing(c: any): Promise<IPlayOffer[]> {
     }
 
     const google = new GoogleProvider(c.env);
+    console.debug("got google");
+    
+
     const play = new GooglePlayProvider(google, packageName);
     const offers = await play.getOffers();
+
+    console.debug("got offers", offers);
 
     const response = Response.json(offers);
     response.headers.append("Cache-Control", "s-maxage=900");
@@ -84,6 +89,7 @@ PaymentAPI.get("/:uid/:productId", async (c) => {
             uid,
             productId: target?.basePlanId ?? productId,
             offerId: target?.offerId ?? productId,
+            package: "me.laknabil.vocafusion"
         },
     })
 
@@ -95,7 +101,10 @@ PaymentAPI.get("/:uid/:productId", async (c) => {
 PaymentAPI.post("/webhook", async (c) => {
     const body = await c.req.json();
     console.log(body);
-    if (body.type != "checkout.paid") return c.json({ status: "error", message: "Invalid event type" });
+    if (body.type != "checkout.session.completed" || body.data.object.metadata.package != "me.laknabil.vocafusion") {
+        return c.json({ status: "error", message: "Invalid event type" });
+    }
+
 
     const { uid } = body.data.metadata;
     const amount = body.data.amount;

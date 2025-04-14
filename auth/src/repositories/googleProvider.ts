@@ -4,6 +4,8 @@ const { subtle } = globalThis.crypto;
 const PEM_HEADER = '-----BEGIN PRIVATE KEY-----';
 const PEM_FOOTER = '-----END PRIVATE KEY-----';
 
+
+
 function objectToBase64url(object: object): string {
     return arrayBufferToBase64Url(new TextEncoder().encode(JSON.stringify(object)) as unknown as ArrayBuffer);
 }

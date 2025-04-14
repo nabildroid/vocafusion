@@ -3,8 +3,8 @@ main = "src/index.ts"
 compatibility_date = "2024-10-23"
 compatibility_flags = [ "nodejs_compat" ]
 
-# [vars]
-# MY_VAR = "my-variable"
+[vars]
+GOOGLE_CLIENT_EMAIL = "firebase-adminsdk-fbsvc@vocafusion-5f341.iam.gserviceaccount.com"
 
 # [[kv_namespaces]]
 # binding = "MY_KV_NAMESPACE"

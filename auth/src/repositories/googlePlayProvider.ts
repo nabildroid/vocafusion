@@ -162,6 +162,7 @@ export default class GooglePlayProvider {
         );
 
         const data = await response.json();
+        console.debug("got subscriptions", data);
         return (data as any).subscriptions as Subscription[];
     }
 
