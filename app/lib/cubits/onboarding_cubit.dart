@@ -78,21 +78,20 @@ class OnboardingCubit extends HydratedCubit<OnboardingState> {
   // New methods for onboarding screen
   void setNativeLanguage(String language) {
     emit(state.copyWith(nativeLanguage: language));
-  }
-
-  void setTargetLanguage(String language) {
-    emit(state.copyWith(targetLanguage: language));
 
     final filter = FlowFilter(
-        targetLanguage: language, nativeLanguage: state.nativeLanguage ?? "");
+        nativeLanguage: language, targetLanguage: state.targetLanguage ?? "");
 
     locator.get<ContentRepository>().getFlowsByFilters(filter).then((flows) {
-      if (state.targetLanguage != language) return;
       final topLevelFlows =
           flows.where((flow) => flow.parentFlow == null).toList();
 
       emit(state.copyWith(allFlows: topLevelFlows));
     });
+  }
+
+  void setTargetLanguage(String language) {
+    emit(state.copyWith(targetLanguage: language));
   }
 
   void setLanguageLevel(int level) {

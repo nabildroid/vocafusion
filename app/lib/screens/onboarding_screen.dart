@@ -377,6 +377,9 @@ class CreateAccount extends StatelessWidget {
               final user = await locator<UserRepository>()
                   .loginWithGoogle(nativeLanguage: nativeLangauge);
 
+              await Future.delayed(Duration(seconds: 1));
+              context.go("/learn");
+
               print(user);
             },
             text: "Sign in with Google",

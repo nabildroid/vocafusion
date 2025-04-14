@@ -13,7 +13,7 @@ import 'package:vocafusion/models/modeling.dart';
 import 'package:vocafusion/repositories/preferences_repository.dart';
 
 // ignore: constant_identifier_names
-const _BaseURL = kDebugMode
+const _BaseURL = kReleaseMode
     ? "https://vocafusion-auth.pni20156789.workers.dev"
     : "http://192.168.0.105:8787";
 // ignore: constant_identifier_names

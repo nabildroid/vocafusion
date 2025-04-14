@@ -53,12 +53,15 @@ PublicAPI.post("/loginWithGoogle", async (c) => {
 
 
 
+
+
     } catch (e) {
         console.log(e)
-        user = await drizzle(c.env.DB).select().from(usersTable).where(eq(usersTable.email, googleUser.email)).get()
-        if (!user) {
+        const query = await drizzle(c.env.DB).select().from(usersTable).where(eq(usersTable.email, googleUser.email))
+        if (!query.length) {
             return c.json({ success: false, error: "User not found" }, { status: 404 })
         }
+        user = query[0]
 
     }
     console.log(user);
@@ -102,12 +105,16 @@ PublicAPI.post("/refresh", async (c) => {
     }
 
     const uid = payload.uid as string;
-    const user = await drizzle(c.env.DB).select().from(usersTable).where(eq(usersTable.uid, uid)).get()
 
+    const now = Date.now();
+    const query = await drizzle(c.env.DB).select().from(usersTable).where(eq(usersTable.uid, uid));
+    console.info(Date.now() - now + "ms");
 
-    if (!user) {
+    if (!query.length) {
         return c.notFound()
     }
+
+    const user = query[0];
 
     // user.claims = {
     //     premiumExpires: Date.now() + 1000 * 60 * 60 * 24 * 30,
