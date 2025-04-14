@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:rxdart/rxdart.dart';
@@ -12,7 +13,9 @@ import 'package:vocafusion/models/modeling.dart';
 import 'package:vocafusion/repositories/preferences_repository.dart';
 
 // ignore: constant_identifier_names
-const _BaseURL = "http://192.168.0.105:8787";
+const _BaseURL = kDebugMode
+    ? "https://vocafusion-auth.pni20156789.workers.dev"
+    : "http://192.168.0.105:8787";
 // ignore: constant_identifier_names
 const _AUTH_HEADER = "x-auth";
 // ignore: constant_identifier_names

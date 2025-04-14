@@ -33,7 +33,7 @@ async function getPeriodicallyCachedPricing(c: any): Promise<IPlayOffer[]> {
     const offers = await play.getOffers();
 
     const response = Response.json(offers);
-    response.headers.append("Cache-Control", "s-maxage=10");
+    response.headers.append("Cache-Control", "s-maxage=900");
     await cache.put(cacheKey, response);
 
     return offers;

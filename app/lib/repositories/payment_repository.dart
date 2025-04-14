@@ -55,8 +55,7 @@ class PaymentRepository {
 
   Future<String> getCheckoutLink(String productId) async {
     final link =
-        "https://45a1-212-8-252-162.ngrok-free.app/payment/${repo.currentUser.value!.uid}/$productId";
-
+        "${repo.http.options.baseUrl}/payment/${repo.currentUser.value!.uid}/$productId";
     return link;
   }
 }
