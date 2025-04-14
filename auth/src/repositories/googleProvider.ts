@@ -108,16 +108,18 @@ export default class GoogleProvider {
         this.googlePrivateKey = auth.GOOGLE_PRIVATE_KEY;
     }
 
-    async getGoogleAccessToken() {
-        if (this.token) return this.token;
+    async getGoogleAccessToken(scopes: string[] = []) {
+        if (this.token && scopes.length == 0) return this.token;
         const auth = await getGoogleAuthToken({
             private_key: this.googlePrivateKey,
             client_email: this.googleClientEmail
-        }, ["openid", "email", "profile"]);
+        }, ["openid", "email", "profile", ...scopes]);
 
         this.token = auth;
         return auth;
     }
+
+
 
     async getUser(token: string, allowUnverifiedEmail = false) {
         console.time("GoogleUserFetcher")

@@ -1,49 +1,93 @@
 import { cors } from "hono/cors";
 import { CreateHono } from "..";
 import { drizzle } from 'drizzle-orm/d1';
-import { ChargilyClient } from '@chargily/chargily-pay';
 import { usersTable } from "../db/schema";
 import { eq } from 'drizzle-orm';
 import { analytics } from "../utils";
+import Stripe from "stripe";
+import GoogleProvider from "../repositories/googleProvider";
+import GooglePlayProvider, { type IPlayOffer } from "../repositories/googlePlayProvider";
 
-const gate = new ChargilyClient({
-    api_key: 'test_sk_n1O6YHs72Jv5LDh4fl8tA6M2WaYC4MZ2FJ4WGvbH',
-    mode: 'test', // Change to 'live' when deploying your application
-});
 
 const PaymentAPI = CreateHono();
 PaymentAPI.use('*', cors())
 
 
 
-PaymentAPI.get("/:uid", async (c) => {
-    const { uid } = c.req.param();
-    const user = await drizzle(c.env.DB).select().from(usersTable).where(eq(usersTable.uid, uid)).get()
+async function getPeriodicallyCachedPricing(c: any): Promise<IPlayOffer[]> {
+    const packageName = "me.laknabil.voca";
 
-    if (!user) {
-        return c.json({ message: "user not found" }, { status: 404 })
+    // request are generly very slow to the GooglePlayProvider, better cached for 5 minutes
+    const cache = await caches.open("default")
+    const cacheKey = new Request("https://payment.pricing." + packageName);
+    const cached = await cache.match(cacheKey);
+
+    if (cached) {
+        console.log("From cache")
+        const cachedData = await cached.json();
+        return cachedData as any;
     }
 
-    if (user.claims?.premiumExpires) {
-        const now = new Date().getTime();
-        if (now < user.claims.premiumExpires) {
-            return c.json({ status: "error", message: "User already has premium" });
-        }
-    }
+    const google = new GoogleProvider(c.env);
+    const play = new GooglePlayProvider(google, packageName);
+    const offers = await play.getOffers();
+
+    const response = Response.json(offers);
+    response.headers.append("Cache-Control", "s-maxage=10");
+    await cache.put(cacheKey, response);
+
+    return offers;
+}
+
+PaymentAPI.get("/pricing", async (c) => {
+    const offers = await getPeriodicallyCachedPricing(c);
+
+    return c.json({ offers })
+})
+
+PaymentAPI.get("/:uid/:productId", async (c) => {
+    const { uid, productId } = c.req.param();
+    // const user = await drizzle(c.env.DB).select().from(usersTable).where(eq(usersTable.uid, uid)).get()
+
+    // if (!user) {
+    //     return c.json({ message: "user not found" }, { status: 404 })
+    // }
+
+    // if (user.claims?.premiumExpires) {
+    //     const now = new Date().getTime();
+    //     if (now < user.claims.premiumExpires) {
+    //         return c.json({ status: "error", message: "User already has premium" });
+    //     }
+    // }
+    const pricing = await getPeriodicallyCachedPricing(c);
+    const target = pricing.find(e => e.basePlanId == productId || e.offerId == productId);
 
 
-    const link = await gate.createCheckout({
+    const gate = new Stripe(c.env.STRIPE_KEY!);
+    const link = await gate.checkout.sessions.create({
+        line_items: [
+            {
+                price_data: {
+                    currency: "usd",
+                    product_data: {
+                        name: "Premium Subscription",
+                    },
+                    unit_amount: (target?.usdPrice ?? 10) * 100,
+                },
+                quantity: 1,
+            },
+        ],
+        mode: 'payment',
         success_url: "https://vocafusion.laknabil.me/payment",
-        amount: 2000,
-        currency: "dzd",
-        description: "Monthly susbcriptions",
+        cancel_url: "https://vocafusion.laknabil.me/payment",
         metadata: {
             uid,
+            productId: target?.basePlanId ?? productId,
+            offerId: target?.offerId ?? productId,
         },
-        locale: "ar",
     })
 
-    return c.redirect(link.checkout_url);
+    return c.redirect(link.url!);
 });
 
 

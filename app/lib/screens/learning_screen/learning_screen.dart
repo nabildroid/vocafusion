@@ -10,14 +10,16 @@ import 'package:vocafusion/cubits/auth_cubit.dart';
 import 'package:vocafusion/cubits/content_cubit.dart';
 import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
+import 'package:vocafusion/cubits/premium_cubit.dart';
 import 'package:vocafusion/cubits/streak_cubit.dart';
 import 'package:vocafusion/models/modeling.dart';
+import 'package:vocafusion/repositories/feature_flag_repository.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/branching_path.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/flashback_widgets.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/quiz_widget.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/widgets.dart';
 import 'package:vocafusion/screens/learning_screen/widgets/word_card.dart';
-import 'package:vocafusion/screens/premium_screen.dart';
+import 'package:vocafusion/screens/premium/premium_screen.dart';
 import 'package:vocafusion/utils/utils.dart';
 
 class LearningScreen extends StatefulWidget {
@@ -543,7 +545,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               backgroundColor:
                   isPro ? Theme.of(context).primaryColor : Colors.grey.shade200,
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => PremiumScreen(),

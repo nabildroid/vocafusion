@@ -4,29 +4,28 @@ import 'package:vocafusion/models/core/access_token_model.dart';
 
 final class UserCustomClaims extends Equatable {
   const UserCustomClaims({
-    required this.premiumExpires,
+    this.premiumExpires,
   });
 
-  final DateTime premiumExpires;
+  final DateTime? premiumExpires;
 
-  bool get isPremium => DateTime.now().isBefore(premiumExpires);
+  bool get isPremium =>
+      premiumExpires != null && DateTime.now().isBefore(premiumExpires!);
 
   bool get isTrulyPremium =>
-      premiumExpires.difference(DateTime.now()).inDays < 1000;
+      isPremium && premiumExpires!.difference(DateTime.now()).inDays < 1000;
 
   Map<String, dynamic> toJson() {
     return {
-      "premiumExpires": isPremium ? premiumExpires.toIso8601String() : null,
+      "premiumExpires": isPremium ? premiumExpires!.toIso8601String() : null,
     };
   }
 
   factory UserCustomClaims.fromJson(Map<String, dynamic> data) {
-    var expiresAt = DateTime.now().add(Duration(days: 10000));
-    if (data["premiumExpires"] != null) {
-      expiresAt = DateTime.fromMillisecondsSinceEpoch(data["premiumExpires"]);
-    }
     return UserCustomClaims(
-      premiumExpires: expiresAt,
+      premiumExpires: data['premiumExpires'] != null
+          ? DateTime.parse(data['premiumExpires'])
+          : null,
     );
   }
 
@@ -44,7 +43,7 @@ class User extends Equatable {
 
   final DateTime createdAt;
 
-  User({
+  const User({
     required this.uid,
     required this.nativeLanguage,
     required this.createdAt,

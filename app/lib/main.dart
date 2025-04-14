@@ -17,6 +17,7 @@ import 'package:vocafusion/cubits/content_cubit.dart';
 import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/learning/sr_cubit.dart';
 import 'package:vocafusion/cubits/onboarding_cubit.dart';
+import 'package:vocafusion/cubits/premium_cubit.dart';
 import 'package:vocafusion/cubits/streak_cubit.dart';
 import 'package:vocafusion/repositories/preferences_repository.dart';
 import 'package:vocafusion/startup.dart';
@@ -122,6 +123,10 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => OnboardingCubit(),
+          lazy: false,
+        ),
+        BlocProvider(
+          create: (context) => PremiumCubit()..sync(context),
           lazy: false,
         ),
         BlocProvider(

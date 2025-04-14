@@ -11,6 +11,7 @@ type Bindings = {
 
     GOOGLE_CLIENT_EMAIL: string;
     GOOGLE_PRIVATE_KEY: string;
+    STRIPE_KEY: string;
 }
 
 

@@ -23,7 +23,6 @@ const _TOKEN_CHECK_INTERVAL_SECONDS = 30; // Check every 30 seconds
 class UserRepository {
   final PreferenceRepository _prefs = locator.get();
   final Dio http = Dio(BaseOptions(baseUrl: _BaseURL));
-
   final tokenSteam = BehaviorSubject<String?>()..add(null);
   final currentUser = BehaviorSubject<User?>();
 
