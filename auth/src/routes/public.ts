@@ -43,7 +43,7 @@ PublicAPI.post("/loginWithGoogle", async (c) => {
     let user: any;
 
     try {
-        user = await drizzle(c.env.DB).insert(usersTable).values({
+        const query = await drizzle(c.env.DB).insert(usersTable).values({
             uid: generateID(),
             email: googleUser.email,
             displayName: googleUser.name,
@@ -51,8 +51,7 @@ PublicAPI.post("/loginWithGoogle", async (c) => {
             nativeLanguage: nativeLanguage!
         }).returning()
 
-
-
+        user = query[0];
 
 
     } catch (e) {
