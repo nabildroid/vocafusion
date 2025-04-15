@@ -6,7 +6,7 @@
     
 
     <application
-        android:label="voca"
+        android:label="Vocafusion"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
