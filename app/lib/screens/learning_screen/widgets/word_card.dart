@@ -107,24 +107,25 @@ class _CardWidgetState extends State<CardWidget> {
             widget.item.context,
           ),
           const SizedBox(height: 20),
-          Row(
-            children: [
-              WordActionButton(
-                icon: Icons.favorite_border,
-                onPress: () {},
-              ),
-              Spacer(),
-              WordActionButton(
-                icon: Icons.mic,
-                onPress: () {},
-              ),
-              const SizedBox(width: 8),
-              WordActionButton(
-                icon: Icons.play_arrow,
-                onPress: () {},
-              ),
-            ],
-          ),
+          if (false)
+            Row(
+              children: [
+                WordActionButton(
+                  icon: Icons.favorite_border,
+                  onPress: () {},
+                ),
+                Spacer(),
+                WordActionButton(
+                  icon: Icons.mic,
+                  onPress: () {},
+                ),
+                const SizedBox(width: 8),
+                WordActionButton(
+                  icon: Icons.play_arrow,
+                  onPress: () {},
+                ),
+              ],
+            ),
         ],
       ),
     );

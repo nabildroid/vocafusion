@@ -78,7 +78,9 @@ class StreakCongratsSheet extends StatelessWidget {
               checkIfVisible: () {
                 return true;
               },
-              onPressed: () async {},
+              onPressed: () async {
+                Navigator.of(context).pop();
+              },
               label: "I'll practice Now!"),
           const SizedBox(height: 20),
         ],

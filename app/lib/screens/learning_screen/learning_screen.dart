@@ -455,10 +455,10 @@ class CustomNavigationBar extends StatelessWidget {
           icon: Icon(Icons.favorite),
           label: 'Favorite',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profile',
-        ),
+        // BottomNavigationBarItem(
+        //   icon: Icon(Icons.person),
+        //   label: 'Profile',
+        // ),
       ],
     );
   }
@@ -547,6 +547,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   : Colors.grey.shade200,
             ),
             onPressed: () async {
+              if (isPro) return;
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => PremiumScreen(),

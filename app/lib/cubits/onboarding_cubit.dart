@@ -125,7 +125,7 @@ class OnboardingCubit extends HydratedCubit<OnboardingState> {
 
     if (isReadyToFilterFlows) {
       final flows = List<WordsFlow>.from(change.nextState.allFlows!);
-      flows.removeWhere((e) => e.level != change.nextState.languageLevel);
+      // flows.removeWhere((e) => e.level != change.nextState.languageLevel);
 
       flows.sort(
         (a, b) => a.suggestor
