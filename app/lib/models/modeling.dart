@@ -24,7 +24,8 @@ final class UserCustomClaims extends Equatable {
   factory UserCustomClaims.fromJson(Map<String, dynamic> data) {
     return UserCustomClaims(
       premiumExpires: data['premiumExpires'] != null
-          ? DateTime.parse(data['premiumExpires'])
+          ? DateTime.fromMillisecondsSinceEpoch(
+              int.parse(data['premiumExpires'].toString()))
           : null,
     );
   }
@@ -70,6 +71,19 @@ class User extends Equatable {
     final token = accessToken.token;
     final Map<String, dynamic> data = JwtDecoder.decode(token);
     return User.fromJson(data);
+  }
+
+  User makeItPro() {
+    return User(
+      uid: uid,
+      email: email,
+      displayName: displayName,
+      createdAt: createdAt,
+      claims: UserCustomClaims(
+        premiumExpires: DateTime.now().add(const Duration(days: 30)),
+      ),
+      nativeLanguage: nativeLanguage,
+    );
   }
 
   @override

@@ -29,48 +29,63 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   void checkout() async {
     final cubit = context.read<PremiumCubit>();
-    cubit.purchase();
 
     if (cubit.state.paymentGatway == PaymentGatway.stripe) {
-      // Example: Navigate to checkout
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) {
-        // Pass the selected ID or related product details if needed
+      final response = await Navigator.of(context)
+          .push<bool>(MaterialPageRoute(builder: (_) {
         final selected = cubit.state.selectedPackage!;
-
-        return StripeCheckoutSreen(
-          checkoutWebviewKey: selected.id,
-        );
+        return StripeCheckoutSreen(checkoutWebviewKey: selected.id);
       }));
+
+      if (response == true) {
+        cubit.handleStripeSuccess();
+      } else if (response == false) {
+        cubit.initStripePayment(force: true);
+      }
+    } else {
+      cubit.purchaseFromGoogle();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color.fromARGB(255, 0, 99, 8),
-              const Color.fromARGB(255, 19, 31, 20),
-              Colors.blue.shade900,
+    return BlocListener<PremiumCubit, PremiumState>(
+      listenWhen: (prev, state) {
+        return prev.isNewPurchased == false && state.isNewPurchased;
+      },
+      listener: (ctx, state) async {
+        if (state.isNewPurchased) {
+          await Future.delayed(const Duration(milliseconds: 100));
+          if (!mounted) return;
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                const Color.fromARGB(255, 0, 99, 8),
+                const Color.fromARGB(255, 19, 31, 20),
+                Colors.blue.shade900,
+              ],
+            ),
+          ),
+          child: Column(
+            children: [
+              SizedBox(height: MediaQuery.of(context).padding.top),
+              _buildHeader(context),
+              // Use the new standalone widget
+              SubscriptionOptionsWidget(),
+              _buildFeaturesSection(context),
             ],
           ),
         ),
-        child: Column(
-          children: [
-            SizedBox(height: MediaQuery.of(context).padding.top),
-            _buildHeader(context),
-            // Use the new standalone widget
-            SubscriptionOptionsWidget(),
-            _buildFeaturesSection(context),
-          ],
-        ),
+        floatingActionButton: _buildTrialButton(context),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       ),
-      floatingActionButton: _buildTrialButton(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -200,7 +215,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   Widget _buildTrialButton(BuildContext context) {
     return Builder(builder: (context) {
-      final package = context.watch<PremiumCubit>().state.selectedPackage;
+      final state = context.watch<PremiumCubit>().state;
+      final package = state.selectedPackage;
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
@@ -208,6 +224,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           children: [
             ElevatedButton(
               onPressed: () {
+                if (state.checkingNewPruchase) return;
                 if (package != null) {
                   checkout();
                 }
@@ -226,7 +243,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   Icon(Icons.card_giftcard),
                   SizedBox(width: 8),
                   Text(
-                    package == null
+                    package == null || state.checkingNewPruchase
                         ? "Loading"
                         : package.freeTrialDays > 0
                             ? "Redeem ${package.freeTrialDays} days Free Trial"

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 
 import 'package:equatable/equatable.dart';
@@ -43,6 +44,9 @@ class PremiumState extends Equatable {
 
   final PaymentGatway paymentGatway;
 
+  final bool checkingNewPruchase;
+  final bool isNewPurchased;
+
   PremiumState({
     this.selectedPackage,
     this.loadingWebviews = false,
@@ -50,6 +54,8 @@ class PremiumState extends Equatable {
     this.paymentGatway = PaymentGatway.google,
     this.pricing,
     this.products,
+    this.checkingNewPruchase = false,
+    this.isNewPurchased = false,
   });
 
   PremiumState copyWith({
@@ -59,6 +65,8 @@ class PremiumState extends Equatable {
     bool? loadingPircing,
     List<PricingPlan>? pircing,
     List<ProductDetails>? products,
+    bool? checkingNewPruchase,
+    bool? isNewPurchased,
   }) {
     return PremiumState(
       selectedPackage: selectedPackage ?? this.selectedPackage,
@@ -67,6 +75,8 @@ class PremiumState extends Equatable {
       loadingPircing: loadingPircing ?? this.loadingPircing,
       pricing: pircing ?? this.pricing,
       products: products ?? this.products,
+      checkingNewPruchase: checkingNewPruchase ?? this.checkingNewPruchase,
+      isNewPurchased: isNewPurchased ?? this.isNewPurchased,
     );
   }
 
@@ -77,14 +87,16 @@ class PremiumState extends Equatable {
         paymentGatway,
         loadingPircing,
         pricing,
-        products
+        products,
+        checkingNewPruchase,
+        isNewPurchased,
       ];
 }
 
 class PremiumCubit extends Cubit<PremiumState> {
   PremiumCubit() : super(PremiumState());
 
-  StreamSubscription<List<PurchaseDetails>>? _subscription;
+  StreamSubscription? _inAppPurchaseSub;
 
   void setSelecedPackage(SelectedPremiumPackageOption package) {
     emit(state.copyWith(selectedPackage: package));
@@ -94,93 +106,127 @@ class PremiumCubit extends Cubit<PremiumState> {
     final selected = state.pricing!.firstWhere(
         (element) => element.offerId == id || element.basePlanId == id);
 
-    emit(state.copyWith(
-      selectedPackage: SelectedPremiumPackageOption(
-        id: selected.offerId,
-        freeTrialDays: selected.freeTrailDuration,
-        gateway: PaymentGatway.stripe,
-        price: "\$${selected.usdPrice}",
-        period: selected.periodInDays > 30 ? "Year" : "Month",
-      ),
+    setSelecedPackage(SelectedPremiumPackageOption(
+      id: selected.offerId,
+      freeTrialDays: selected.freeTrailDuration,
+      gateway: PaymentGatway.stripe,
+      price: "\$${selected.usdPrice}",
+      period: selected.periodInDays > 30 ? "Year" : "Month",
     ));
 
-    initExternalPayment();
+    initStripePayment();
   }
 
-  void purchase() async {
+  void handleStripeSuccess() async {
+    final userRepo = locator.get<UserRepository>();
+
+    userRepo.currentUser.value = userRepo.currentUser.value!.makeItPro();
+    emit(state.copyWith(isNewPurchased: true));
+
+    await userRepo.getUser(live: true);
+  }
+
+  void purchaseFromGoogle() async {
     final package = state.selectedPackage;
     if (package == null) return;
+    if (package.gateway != PaymentGatway.google) return;
 
-    if (package.gateway == PaymentGatway.google) {
-      final product = state.products!.where(
-          (e) => (e as GooglePlayProductDetails).offerToken == package.id);
+    final product = state.products!
+        .where((e) => (e as GooglePlayProductDetails).offerToken == package.id);
 
-      if (product.isEmpty) return;
+    if (product.isEmpty) return;
 
-      await InAppPurchase.instance.buyNonConsumable(
-        purchaseParam: PurchaseParam(
-          productDetails: product.first,
-        ),
-      );
-    } else {}
-  }
-
-  void init() {
-    final Stream purchaseUpdated = InAppPurchase.instance.purchaseStream;
-    purchaseUpdated.listen(
-      (purchaseDetailsList) {},
-      onDone: () {},
-      onError: (error) {},
+    await InAppPurchase.instance.buyNonConsumable(
+      purchaseParam: PurchaseParam(
+        productDetails: product.first,
+      ),
     );
   }
 
-  bool isExternalCheckoutInited = false;
-  initExternalPayment({bool force = false}) async {
-    if (isExternalCheckoutInited && !force) return;
-    isExternalCheckoutInited = true;
+  Stream<List<PurchaseDetails>> getPurchaseStream() {
+    return InAppPurchase.instance.purchaseStream.where((purchaseDetailsList) {
+      if (purchaseDetailsList.isEmpty) return false;
+      final purchaseDetails = purchaseDetailsList.first;
+
+      return purchaseDetails.status == PurchaseStatus.purchased ||
+          purchaseDetails.status == PurchaseStatus.restored ||
+          purchaseDetails.pendingCompletePurchase;
+    });
+  }
+
+  void init(User user) async {
+    _inAppPurchaseSub?.cancel();
+    final userRepo = locator.get<UserRepository>();
+
+    _inAppPurchaseSub = getPurchaseStream().listen((purchaseDetailsList) async {
+      final purchaseDetails = purchaseDetailsList.first;
+
+      emit(state.copyWith(checkingNewPruchase: true));
+      await locator.get<PaymentRepository>().verifyGooglePayment(
+          purchaseDetails.verificationData.serverVerificationData);
+      userRepo.currentUser.value = user.makeItPro();
+
+      emit(state.copyWith(checkingNewPruchase: false, isNewPurchased: true));
+
+      await InAppPurchase.instance.completePurchase(purchaseDetails);
+      await userRepo.getUser(live: true);
+    });
+  }
+
+  bool isStripeCheckoutInited = false;
+  initStripePayment({bool force = false}) async {
+    if (isStripeCheckoutInited && !force) return;
+    isStripeCheckoutInited = true;
 
     emit(state.copyWith(loadingWebviews: true));
     final repo = locator.get<PaymentRepository>();
 
     final gatwayEntries = await Future.wait(state.pricing!.map((p) async {
       final key = p.offerId.isEmpty ? p.basePlanId : p.offerId;
-      return MapEntry(key, await repo.getCheckoutLink(key));
+      return MapEntry(key, await repo.getStripeLink(key));
     }));
 
-    createHeadlessWebviews(gatwayEntries);
+    await createHeadlessStripeWebviews(gatwayEntries);
   }
 
-  Map<String, HeadlessInAppWebView> headless = {};
-  createHeadlessWebviews(List<MapEntry<String, String>> entries) async {
+  Map<String, HeadlessInAppWebView> headlessStripes = {};
+  Future<void> createHeadlessStripeWebviews(
+      List<MapEntry<String, String>> entries) async {
     int i = entries.length;
     for (var entry in entries) {
       final key = entry.key;
       final url = entry.value;
 
-      if (headless[key] != null) {
-        await headless[key]!.dispose();
-        headless.remove(key);
+      if (headlessStripes[key] != null) {
+        await headlessStripes[key]!.dispose();
+        headlessStripes.remove(key);
       }
 
-      headless[key] = HeadlessInAppWebView(
+      headlessStripes[key] = HeadlessInAppWebView(
         initialUrlRequest: URLRequest(url: WebUri(url)),
         initialSettings: InAppWebViewSettings(),
+        onLoadStart: (_, __) {
+          // sometime trying multiple time for debug perpos block the experience
+          if (kDebugMode && --i == 0) {
+            emit(state.copyWith(loadingWebviews: false));
+          }
+        },
         onLoadStop: (_, __) {
-          i--;
-          if (i == 0) {
+          if (kReleaseMode && --i == 0) {
             emit(state.copyWith(loadingWebviews: false));
           }
         },
       );
-      await headless[key]!.run();
+      Future.delayed(Duration(milliseconds: 100));
+      await headlessStripes[key]!.run();
     }
   }
 
   @override
   Future<void> close() {
-    _subscription?.cancel();
+    _inAppPurchaseSub?.cancel();
 
-    for (var v in headless.values) {
+    for (var v in headlessStripes.values) {
       v.dispose();
     }
     return super.close();
@@ -232,20 +278,15 @@ extension PremiumCubitExtention on PremiumCubit {
         .whereNotNull();
 
     _listeners.add(userStream.listen((user) {
+      init(user);
       if (!user.claims.isTrulyPremium) {
         decidePayment(user);
         loadOffers();
       }
     }));
-
-    init();
   }
 
   close() {
     _listeners.dispose();
   }
-}
-
-String _parseVariantLink(String link) {
-  return "https://" + link.replaceAll("_", ".").replaceAll("--", "/");
 }

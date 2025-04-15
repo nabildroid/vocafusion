@@ -215,6 +215,31 @@ export default class GooglePlayProvider {
 
         return offers.filter(Boolean) as IPlayOffer[]
     }
+
+
+    async verifyPurchase(serverToken: string) {
+        const response = await fetch(`https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${this.packageName}/purchases/subscriptions/me.laknabil.voca.premium/tokens/${serverToken}`, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${await this.getToken()}`,
+            }
+        })
+        const result = (await response.json()) as any;
+        return {
+            startTimeMillis: result.startTimeMillis,
+            expiryTimeMillis: result.expiryTimeMillis,
+            autoRenewing: result.autoRenewing,
+            priceCurrencyCode: result.priceCurrencyCode,
+            priceAmountMicros: result.priceAmountMicros,
+            countryCode: result.countryCode,
+            developerPayload: result.developerPayload,
+            paymentState: result.paymentState,
+            orderId: result.orderId,
+            purchaseType: result.purchaseType,
+            acknowledgementState: result.acknowledgementState,
+            kind: result.kind
+        };
+    }
 }
 
 

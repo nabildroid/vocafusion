@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:vocafusion/config/locator.dart';
 import 'package:vocafusion/cubits/learning/learning_session_cubit.dart';
 import 'package:vocafusion/cubits/onboarding_cubit.dart';
@@ -378,6 +379,7 @@ class CreateAccount extends StatelessWidget {
                   .loginWithGoogle(nativeLanguage: nativeLangauge);
 
               await Future.delayed(Duration(seconds: 1));
+              await InAppPurchase.instance.restorePurchases();
               context.go("/learn");
 
               print(user);

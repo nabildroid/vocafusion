@@ -13,6 +13,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:vocafusion/screens/fav_screen.dart';
 import 'package:vocafusion/screens/learning_screen/learning_screen.dart';
 import 'package:vocafusion/screens/onboarding_screen.dart';
+import 'package:vocafusion/screens/premium/global_premium_listener.dart';
 
 final GoRouter router = GoRouter(
   observers: [
@@ -38,41 +39,51 @@ final GoRouter router = GoRouter(
   },
   initialLocation: "/learn",
   routes: [
-    GoRoute(
-      path: "/learn",
-      builder: (context, state) => LearningScreen(),
+    ShellRoute(
+      // navigatorKey: _shellNavigatorKey, // Use if needed for nested navigation
+      builder: (context, state, child) {
+        // The child here is the widget managed by the GoRouter for the current route
+        // Wrap it with the listener
+        return GlobalPremiumListenerWrapper(child: child);
+      },
       routes: [
         GoRoute(
-          path: "favorites",
-          pageBuilder: (context, state) => CustomTransitionPage<void>(
-            key: state.pageKey,
-            child: FavScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-              const begin = Offset(0.0, 1.0);
-              const end = Offset.zero;
-              const curve = Curves.easeInOutCubic;
+          path: "/learn",
+          builder: (context, state) => LearningScreen(),
+          routes: [
+            GoRoute(
+              path: "favorites",
+              pageBuilder: (context, state) => CustomTransitionPage<void>(
+                key: state.pageKey,
+                child: FavScreen(),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(0.0, 1.0);
+                  const end = Offset.zero;
+                  const curve = Curves.easeInOutCubic;
 
-              var tween =
-                  Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-              var offsetAnimation = animation.drive(tween);
+                  var tween = Tween(begin: begin, end: end)
+                      .chain(CurveTween(curve: curve));
+                  var offsetAnimation = animation.drive(tween);
 
-              return SlideTransition(
-                position: offsetAnimation,
-                child: child,
-              );
-            },
-            barrierDismissible: true,
-            barrierColor: Colors.black38,
-            opaque: false,
-            maintainState: true,
-          ),
+                  return SlideTransition(
+                    position: offsetAnimation,
+                    child: child,
+                  );
+                },
+                barrierDismissible: true,
+                barrierColor: Colors.black38,
+                opaque: false,
+                maintainState: true,
+              ),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: "/onboarding",
+          builder: (context, state) => const AdsScreen(),
         ),
       ],
-    ),
-    GoRoute(
-      path: "/onboarding",
-      builder: (context, state) => const AdsScreen(),
-    ),
+    )
   ],
 );

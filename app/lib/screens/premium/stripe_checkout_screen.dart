@@ -1,20 +1,18 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:vocafusion/config/locator.dart';
 import 'package:vocafusion/cubits/premium_cubit.dart';
-import 'package:vocafusion/repositories/user_repository.dart';
 
 Map<String, InAppWebViewKeepAlive> alives = {};
 
 class StripeCheckoutSreen extends StatelessWidget {
   final String checkoutWebviewKey;
-  const StripeCheckoutSreen({
+  StripeCheckoutSreen({
     super.key,
     required this.checkoutWebviewKey,
   });
+
+  bool isCommitedPop = false;
 
   @override
   Widget build(BuildContext context) {
@@ -33,29 +31,28 @@ class StripeCheckoutSreen extends StatelessWidget {
       alives[checkoutWebviewKey] = InAppWebViewKeepAlive();
     }
 
-    return PopScope(
-      onPopInvokedWithResult: (isForced, __) {
-        unawaited(locator.get<UserRepository>().getUser(live: true));
-      },
-      child: SafeArea(
-        child: Scaffold(
-          body: InAppWebView(
-            keepAlive: alives[checkoutWebviewKey],
-            headlessWebView:
-                context.read<PremiumCubit>().headless[checkoutWebviewKey],
-            onWebViewCreated: (controller) {},
-            onLoadStop: (controller, url) async {
-              if (url != null &&
-                  !url.toString().contains("stripe") &&
-                  !url.toString().contains("ngrok")) {
-                if (url.toString().contains("ngrok")) {}
-
-                context.read<PremiumCubit>().initExternalPayment(force: true);
+    return SafeArea(
+      child: Scaffold(
+        body: InAppWebView(
+          keepAlive: alives[checkoutWebviewKey],
+          headlessWebView:
+              context.read<PremiumCubit>().headlessStripes[checkoutWebviewKey],
+          onLoadStop: (controller, url) async {
+            if (url != null &&
+                !url.toString().contains("stripe") &&
+                !url.toString().contains("ngrok")) {
+              if (isCommitedPop) return;
+              isCommitedPop = true;
+              if (url.toString().contains("success")) {
+                await controller.pauseTimers();
+                Navigator.of(context).pop(true);
+                return;
+              } else {
                 alives = {};
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(false);
               }
-            },
-          ),
+            }
+          },
         ),
       ),
     );

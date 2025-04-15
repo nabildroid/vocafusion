@@ -542,8 +542,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   true;
           return IconButton.filled(
             style: IconButton.styleFrom(
-              backgroundColor:
-                  isPro ? Theme.of(context).primaryColor : Colors.grey.shade200,
+              backgroundColor: isPro
+                  ? Theme.of(context).primaryColorLight
+                  : Colors.grey.shade200,
             ),
             onPressed: () async {
               Navigator.of(context).push(

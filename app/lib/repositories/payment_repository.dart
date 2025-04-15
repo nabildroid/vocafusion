@@ -53,9 +53,21 @@ class PaymentRepository {
     return pricingPlans;
   }
 
-  Future<String> getCheckoutLink(String productId) async {
+  Future<String> getStripeLink(String productId) async {
     final link =
         "${repo.http.options.baseUrl}/payment/${repo.currentUser.value!.uid}/$productId";
     return link;
+  }
+
+  Future<void> verifyGooglePayment(String googleToken) async {
+    final clientId = repo.currentUser.value!.uid;
+    final response = await repo.http.post(
+      "/payment/purchase/google-play/verify/$clientId",
+      data: {
+        "serverToken": googleToken,
+      },
+    );
+
+    print(response);
   }
 }
